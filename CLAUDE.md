@@ -7,6 +7,7 @@
 5. Garmin data comes only from the official Personal API. No password scraping or unofficial libraries. Strava is bulk export only.
 6. Golden-day tests (`tests/golden/`) must pass before every merge. Work on `feature/*` branches; `main` must always run.
 7. Do not recompute Garmin metrics. The planner adds a judgment layer on top of them.
+8. Commit messages and PR descriptions carry no Co-Authored-By or "Generated with Claude" lines (owner's preference).
 
 ## Layout
 
