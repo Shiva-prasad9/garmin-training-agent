@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Training System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">&#9670;</span>
+      <div>
+        <h1>Training System</h1>
+        <p id="subtitle" class="muted">Loading status window&hellip;</p>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Trend range" id="range">
+        <button data-days="7" aria-pressed="false">7 days</button>
+        <button data-days="10" aria-pressed="true">10 days</button>
+        <button data-days="14" aria-pressed="false">14 days</button>
+      </div>
+      <button id="theme" class="ghost" aria-label="Toggle light or dark theme">Theme</button>
+    </div>
+  </header>
+  <main id="panels" aria-live="polite"></main>
+  <footer class="muted foot">Garmin data via the Personal API. Everything stays on this computer.</footer>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

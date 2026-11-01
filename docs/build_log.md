@@ -54,3 +54,14 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Tests: `tests/test_baselines.py` (6 tests, synthetic series). Notebook sections 8-9 added.
 - Idea: Strava archive for longer history (Phase 3).
 - Note: Jupyter overwrote edits made to an open notebook (autosave of its older copy). Baseline charts moved to a separate `notebooks/02_baselines.ipynb`; rule: never edit a notebook file while it is open in Jupyter.
+
+### Step 10: Dashboard (2026-11-01)
+- Theme chosen: Solo Leveling "system window" (light background, indigo highlights, dark toggle). Panels: status window (latest day vs your normal), daily quest placeholder, trends (HRV, sleep, resting HR, Body Battery; 7/10/14 days, default 10; normal-range band; flagged days; table view), activities (workouts with HR zones, weekly load by sport).
+- Backend: `web/data.py` (`build_overview`), `web/app.py` (`/api/overview`), `scripts/serve.py` (`--lan` for home network). Tests in `tests/test_web_data.py`.
+- Colour check: sport colours validated with the dataviz palette validator (all adjacent-pair checks pass; aqua is below 3:1 on the light surface, so every sport also has a text label).
+- Not yet visually checked: no browser available in the dev environment; first look is by the user.
+- Dashboard review round 1 (screenshots): fixed default theme (light unless toggled), chart text too small (charts now drawn at real width and redrawn on resize), 2 charts per row, one-row status cards, duplicate activity names.
+
+### Step 11: Dashboard committed, pause on step 1a (2026-11-01)
+- Dashboard reviewed on screenshots (light theme, readable charts, 2x2 trends, activities). Theme polish deferred: user will research UI tuning ideas (rank badge, XP bar, background pattern, icons).
+- Next: 7-day trend per signal, then the rules-based planner.

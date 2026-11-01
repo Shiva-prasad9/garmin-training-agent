@@ -20,4 +20,5 @@
 - `src/training_agent/storage/`: persistence
 - `src/training_agent/planner/`: training plan generation (`rules/` holds rule plugins)
 - `src/training_agent/outputs/`: delivery (email, calendar, files)
+- `src/training_agent/web/`: local dashboard (FastAPI + static frontend); reads data via storage, adds panels as new files
 - `scripts/`, `notebooks/`, `tests/`, `docs/`

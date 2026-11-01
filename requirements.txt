@@ -5,3 +5,6 @@ pytest>=8.0
 pandas
 matplotlib
 jupyterlab
+fastapi
+uvicorn
+httpx

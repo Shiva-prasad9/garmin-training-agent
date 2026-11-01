@@ -37,3 +37,7 @@ Target WSL now, an always-on host (e.g. Raspberry Pi) later. No hard-coded absol
 
 ## D012 (2026-11-01): Single entry point
 `main.py` runs one daily cycle; scheduling is added later (Phase 7).
+
+## D013 (2026-11-01): Local dashboard, Solo Leveling-inspired theme
+FastAPI serves one JSON endpoint plus a static page (plain HTML/CSS/JS, hand-written SVG charts, no build step). Each panel is one JS file listed in `static/js/panels/index.js`. Default range 10 days, options 7/14. Light lavender background with deep indigo highlights, dark toggle. Original CSS/SVG styling only, no copied artwork. Binds to 127.0.0.1 unless `--lan` is given (no login).
+Exception noted: the web layer calls `planner.baselines.assess` (a pure, public function) to get assessments; if more consumers need it, move it to a shared analysis module.
