@@ -1,0 +1,20 @@
+.venv/
+.env
+__pycache__/
+*.sqlite
+
+# Ignored directories, but keep the folder structure (.gitkeep) tracked
+secrets/**
+!secrets/**/
+!secrets/**/.gitkeep
+data/**
+!data/**/
+!data/**/.gitkeep
+logs/**
+!logs/**/
+!logs/**/.gitkeep
+.claude/settings.local.json
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.vscode/

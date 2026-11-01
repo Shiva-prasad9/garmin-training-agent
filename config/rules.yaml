@@ -1,0 +1,15 @@
+# Planner thresholds. Missing keys fall back to defaults in the code.
+
+baselines:
+  window_days: 28          # days of history used for each personal baseline
+  min_points: 14           # fewer valid days than this means "no baseline yet"
+  min_spread_pct: 0.03     # floor for the spread, as a fraction of the baseline
+
+data_quality:
+  min_sleep_hours: 3.0     # shorter nights are treated as partial recordings
+  hrv_outlier_z: 4.0       # |z| above this flags the HRV value as an outlier
+
+# Added in Phase 4 (not used yet):
+# readiness_gate:
+# hard_easy_alternation:
+# weekly_load_limit:

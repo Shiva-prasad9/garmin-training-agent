@@ -1,0 +1,39 @@
+# Plugin switchboard. A new feature = one new plugin file + one entry here.
+# `module` is the import path of the plugin file; everything starts disabled.
+
+collectors:
+  garmin_personal_api:
+    enabled: true
+    module: training_agent.collectors.garmin_personal_api
+  strava_export:
+    enabled: false
+    module: training_agent.collectors.strava_export
+
+storage:
+  sqlite:
+    enabled: true
+    module: training_agent.storage.sqlite
+
+planner_rules:
+  readiness_gate:
+    enabled: false
+    module: training_agent.planner.rules.readiness_gate
+  hard_easy_alternation:
+    enabled: false
+    module: training_agent.planner.rules.hard_easy_alternation
+  weekly_load_limit:
+    enabled: false
+    module: training_agent.planner.rules.weekly_load_limit
+
+planner:
+  llm_agent:
+    enabled: false
+    module: training_agent.planner.llm_agent
+
+outputs:
+  google_calendar:
+    enabled: false
+    module: training_agent.outputs.google_calendar
+  email_brief:
+    enabled: false
+    module: training_agent.outputs.email_brief
