@@ -3,10 +3,10 @@ import { el, fmtDay, fmtNum, zStatus } from "../util.js";
 
 // tag = RPG-style label; key = field in the API; domain = how far (in spreads) the meter reaches either side.
 const STATS = [
-  { tag: "VIT", name: "HRV, last night", key: "hrv_last_night_ms", unit: "ms" },
-  { tag: "REST", name: "Sleep score", key: "sleep_score", unit: "" },
-  { tag: "SLP", name: "Sleep duration", key: "sleep_hours", unit: "h", dec: 1 },
-  { tag: "PULSE", name: "Resting heart rate", key: "resting_hr", unit: "bpm" },
+  { tag: "VIT", name: "HRV, last night", key: "hrv_last_night_ms", unit: "ms", good: 1 },
+  { tag: "REST", name: "Sleep score", key: "sleep_score", unit: "", good: 1 },
+  { tag: "SLP", name: "Sleep duration", key: "sleep_hours", unit: "h", dec: 1, good: 1 },
+  { tag: "PULSE", name: "Resting heart rate", key: "resting_hr", unit: "bpm", good: -1 },
 ];
 const FLAG_TEXT = {
   short_sleep: "Short night: sleep readings ignored",
@@ -26,6 +26,15 @@ function meter(s) {
     el("div", { class: "mark", style: `left:${pct(s.value)}%` }));
 }
 
+// 7-day trend, worded by whether the direction is good for this signal (icon + word, never colour alone).
+function trendBadge(sig, good, unit, dec = 0) {
+  if (sig.trend == null) return el("div", { class: "badge", text: "7-day: not enough data" });
+  if (sig.trend === "steady") return el("div", { class: "badge", text: `\u2194 7-day: steady (avg ${fmtNum(sig.trend_mean, dec)} ${unit})` });
+  const better = (sig.trend === "up") === (good === 1);
+  return el("div", { class: `badge ${better ? "good" : "warn"}` },
+    `${sig.trend === "up" ? "\u25B2" : "\u25BC"} 7-day: ${better ? "improving" : "declining"} (avg ${fmtNum(sig.trend_mean, dec)} ${unit})`);
+}
+
 function card(def, sig) {
   const s = { value: sig.value, base: sig.baseline, spread: sig.spread, z: sig.z };
   const st = zStatus(s.z);
@@ -35,6 +44,7 @@ function card(def, sig) {
     el("div", { class: "val" }, fmtNum(s.value, def.dec ?? 0), el("small", { text: def.unit })),
     s.base != null ? el("div", { class: "base", text: `your usual ${fmtNum(s.base, def.dec ?? 0)} ${def.unit}` }) : null,
     el("div", { class: `badge ${st.cls}` }, st.icon ? `${st.icon} ` : "", st.label),
+    trendBadge(sig, def.good, def.unit, def.dec ?? 0),
     meter(s));
 }
 
@@ -51,7 +61,8 @@ export default {
         el("div", { class: "hero" }, el("span", { class: "num", text: fmtNum(bb.value) }),
           el("span", { class: "lbl", text: "HP · morning Body Battery" })),
         el("div", { class: `badge ${bbSt.cls}` }, bbSt.icon ? `${bbSt.icon} ` : "", bbSt.label,
-          bb.baseline != null ? ` (usual ${fmtNum(bb.baseline)})` : "")),
+          bb.baseline != null ? ` (usual ${fmtNum(bb.baseline)})` : ""),
+        trendBadge(bb, 1, "")),
       el("div", { class: "chips" },
         el("span", { class: "chip", text: fmtDay(s.date) }),
         s.hrv_status ? el("span", { class: "chip", text: `HRV status: ${s.hrv_status.toLowerCase()}` }) : null,

@@ -4,6 +4,9 @@ baselines:
   window_days: 28          # days of history used for each personal baseline
   min_points: 14           # fewer valid days than this means "no baseline yet"
   min_spread_pct: 0.03     # floor for the spread, as a fraction of the baseline
+  trend_days: 7            # window for the short-term average (plain mean, includes today)
+  min_trend_points: 4      # fewer valid days than this means "no trend"
+  trend_z_threshold: 1.5   # |trend z| below this counts as steady
 
 data_quality:
   min_sleep_hours: 3.0     # shorter nights are treated as partial recordings

@@ -65,3 +65,10 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 ### Step 11: Dashboard committed, pause on step 1a (2026-11-01)
 - Dashboard reviewed on screenshots (light theme, readable charts, 2x2 trends, activities). Theme polish deferred: user will research UI tuning ideas (rank badge, XP bar, background pattern, icons).
 - Next: 7-day trend per signal, then the rules-based planner.
+
+### Step 12: 7-day trend (2026-11-01)
+- Goal: catch slow changes a single day's z-score misses (e.g. HRV drifting down while each night looks normal).
+- `SignalAssessment` gains `trend` (up/down/steady/None), `trend_mean`, `trend_z`, `trend_n`. Method: plain average of the last 7 valid days vs the 28-day baseline, scaled by spread/sqrt(days used); steady if |z| < 1.5; needs 4+ valid days. Short nights excluded. Parameters in `config/rules.yaml`.
+- Dashboard status cards show the trend as improving/declining/steady (direction judged per signal: higher HRV is good, lower resting HR is good).
+- 5 new tests (21 total). On real data at 2026-11-01: resting HR up (+1.7), Body Battery down (-1.6), HRV borderline (-1.5), sleep steady.
+- Commit message convention: no Co-Authored-By lines (owner preference).

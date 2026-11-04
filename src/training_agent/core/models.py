@@ -66,6 +66,11 @@ class SignalAssessment(BaseModel):
     baseline: float | None = None  # median of the previous valid days
     spread: float | None = None  # robust spread (scaled MAD, with a floor)
     z: float | None = None  # (value - baseline) / spread; None if value invalid or no baseline
+    # Short-term trend: plain average of the last N valid days versus the baseline.
+    trend: str | None = None  # "up" | "down" | "steady"; None = not enough valid days
+    trend_mean: float | None = None
+    trend_z: float | None = None  # (mean - baseline) / (spread / sqrt(days used))
+    trend_n: int = 0  # valid days that went into the average
 
 
 class DailyAssessment(BaseModel):

@@ -51,3 +51,34 @@ def test_today_is_not_in_its_own_baseline():
 def test_load_params_defaults_when_file_missing(tmp_path):
     assert load_params(tmp_path / "nope.yaml") == BaselineParams()
     assert load_params().window_days == 28
+
+
+def _hrv_last_days(value, days=7, short_nights=0):
+    """Steady 40 days, but HRV is `value` for the last `days` days; the first `short_nights` of those are short nights."""
+    ov = {i: {"hrv_last_night_ms": value} for i in range(40 - days, 40)}
+    for i in range(40 - days, 40 - days + short_nights):
+        ov[i]["sleep_hours"] = 2.0
+    return assess(_series(overrides=ov))[-1].signals["hrv_last_night_ms"]
+
+
+def test_trend_down_when_recent_week_is_lower():
+    s = _hrv_last_days(40)
+    assert s.trend == "down" and s.trend_z < -1.5 and s.trend_n == 7
+
+
+def test_trend_steady_when_week_matches_baseline():
+    s = assess(_series())[-1].signals["hrv_last_night_ms"]
+    assert s.trend == "steady" and abs(s.trend_z) < 1.5
+
+
+def test_trend_up():
+    assert _hrv_last_days(65).trend == "up"
+
+
+def test_trend_needs_enough_valid_days():
+    s = _hrv_last_days(40, short_nights=4)  # 4 of 7 nights unreliable -> only 3 valid
+    assert s.trend is None and s.trend_n == 3
+
+
+def test_no_trend_without_baseline():
+    assert assess(_series())[3].signals["hrv_last_night_ms"].trend is None

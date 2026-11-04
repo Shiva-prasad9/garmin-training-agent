@@ -3,6 +3,10 @@
 Garmin's metrics are used as reported. This module only answers: "is this day's
 value normal for this athlete, and can the value be trusted?"
 
+Trend: plain average of the last `trend_days` valid days compared with the baseline,
+scaled by spread / sqrt(days used). Those days partly overlap the baseline window,
+which makes the trend conservative, never too eager.
+
 Method: baseline = median of the previous `window_days` valid values;
 spread = scaled median absolute deviation (robust to outliers). Today is never
 part of its own baseline. Thresholds live in config/rules.yaml.
@@ -11,6 +15,7 @@ part of its own baseline. Thresholds live in config/rules.yaml.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import sqrt
 from datetime import date, timedelta
 from pathlib import Path
 from statistics import median
@@ -32,6 +37,9 @@ class BaselineParams:
     min_sleep_hours: float = 3.0
     hrv_outlier_z: float = 4.0
     min_spread_pct: float = 0.03  # spread floor as a fraction of the baseline
+    trend_days: int = 7  # window for the short-term average (includes today)
+    min_trend_points: int = 4  # fewer valid days than this means "no trend"
+    trend_z_threshold: float = 1.5  # |trend_z| below this counts as steady
 
 
 def load_params(path: str | Path = ROOT / "config" / "rules.yaml") -> BaselineParams:
@@ -82,7 +90,23 @@ def assess(metrics: list[DailyMetrics], params: BaselineParams | None = None) ->
                 current = valid(d, sig)
                 if current is not None:
                     z = (current - baseline) / spread
-            signals[sig] = SignalAssessment(value=getattr(m, sig), baseline=baseline, spread=spread, z=z)
+            trend = trend_mean = trend_z = None
+            used = 0
+            if baseline is not None:
+                recent = [
+                    v for k in range(params.trend_days)
+                    if (v := valid(d - timedelta(days=k), sig)) is not None
+                ]
+                used = len(recent)
+                if used >= params.min_trend_points:
+                    trend_mean = sum(recent) / used
+                    trend_z = (trend_mean - baseline) / (spread / sqrt(used))
+                    trend = ("steady" if abs(trend_z) < params.trend_z_threshold
+                             else "up" if trend_z > 0 else "down")
+            signals[sig] = SignalAssessment(
+                value=getattr(m, sig), baseline=baseline, spread=spread, z=z,
+                trend=trend, trend_mean=trend_mean, trend_z=trend_z, trend_n=used,
+            )
 
         if signals["hrv_last_night_ms"].z is not None and abs(signals["hrv_last_night_ms"].z) > params.hrv_outlier_z:
             flags.append("hrv_outlier")
