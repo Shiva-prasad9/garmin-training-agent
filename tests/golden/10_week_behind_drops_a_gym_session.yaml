@@ -1,0 +1,6 @@
+description: Wednesday with nothing done. Six sessions and five days are left, so the planner drops one gym session and keeps the key sessions.
+weekday: wed
+expect:
+  dropped: [strength]
+  remaining_has: ["10k", "short", "long", "strength"]
+  summary_contains: "behind"

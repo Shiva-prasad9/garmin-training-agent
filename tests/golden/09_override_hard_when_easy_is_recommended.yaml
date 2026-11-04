@@ -1,0 +1,11 @@
+description: Poor sleep, so easy is recommended. The athlete feels fine and chooses hard anyway. It is recorded as an override and tomorrow is capped.
+weekday: wed
+metrics:
+  - {days_ago: 0, sleep_score: 60}
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+expect:
+  cap: easy
+  recommended: easy
+  risk: {easy: recommended, moderate: caution, hard: not_advised}
+  tomorrow_contains: {hard: "capped at easy"}
+  choose: {intensity: hard, overridden: true, recommended_intensity: easy, flags_contain: [readiness_gate]}

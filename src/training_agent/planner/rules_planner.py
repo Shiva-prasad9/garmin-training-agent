@@ -19,8 +19,8 @@ from training_agent.core.plugin import load_enabled_plugins
 from training_agent.planner.base import Planner, PlannerRule, WeekPlanSource
 from training_agent.planner.load import DEFAULT_RATE, hard_threshold, is_hard, load_rates
 from training_agent.planner.params import ROOT, load_athlete, load_section
-from training_agent.planner.prescriptions import prescribe
-from training_agent.planner.week_plan import load_sources, monday_of, targets_for_week, week_progress
+from training_agent.planner.prescriptions import DEFAULT_RIDE_BANDS, prescribe
+from training_agent.planner.week_plan import fit_to_days, load_sources, monday_of, targets_for_week, week_progress
 
 DEFAULTS = {
     "key_session_gap_days": 5,  # recommend a hard key session if there was none in this many days
@@ -33,8 +33,8 @@ GYM_RATE = 0.15  # load per minute for strength work, used only when previewing 
 
 # How well a kind of session suits each intensity (higher is better); decides which open slot is used.
 KIND_SUIT = {
-    "long": {Intensity.EASY: 3, Intensity.MODERATE: 3, Intensity.HARD: 1},
-    "short": {Intensity.EASY: 3, Intensity.MODERATE: 2, Intensity.HARD: 3},
+    "long": {Intensity.EASY: 1, Intensity.MODERATE: 3, Intensity.HARD: 3},   # a long ride is a moderate or hard day
+    "short": {Intensity.EASY: 3, Intensity.MODERATE: 3, Intensity.HARD: 1},
     "strength": {Intensity.EASY: 3, Intensity.MODERATE: 3, Intensity.HARD: 2},
     "distance": {Intensity.EASY: 2, Intensity.MODERATE: 3, Intensity.HARD: 3},  # kinds such as "10k"
 }
@@ -63,7 +63,9 @@ class RulesPlanner(Planner):
         self.rules = rules if rules is not None else load_enabled_plugins(config, "planner_rules")
         self.sources = sources if sources is not None else load_sources(config)
         self.p = {**DEFAULTS, **load_section("planner", {}), **(params or {})}
-        self.max_hr = float(load_athlete().get("max_hr", 195))
+        athlete = load_athlete()
+        self.max_hr = float(athlete.get("max_hr", 195))
+        self.ride_bands = tuple(athlete.get("ride_bands_min", DEFAULT_RIDE_BANDS))
 
     # ---------- main entry ----------
     def plan_day(self, ctx: PlanContext) -> DayPlan:
@@ -71,6 +73,7 @@ class RulesPlanner(Planner):
         cap = lowest(Intensity.HARD, *[v.max_intensity for v in verdicts])
         targets = targets_for_week(monday_of(ctx.day), self.sources)
         remaining, done = week_progress(targets, ctx.activities, ctx.day, self.p["long_ride_minutes"])
+        remaining, dropped = fit_to_days(remaining, ctx.day)
         yesterday_sport = self._yesterday_sport(ctx)
         fatigue = any(v.rule == "hard_easy_alternation" and v.max_intensity != Intensity.HARD for v in verdicts)
         volume_factor = self.p["fatigue_volume_factor"] if fatigue else 1.0
@@ -81,8 +84,11 @@ class RulesPlanner(Planner):
         limits = [r for v in verdicts if v.max_intensity != Intensity.HARD for r in v.reasons]
         rec = next(o for o in options if o.intensity == recommended)
         summary = f"Recommended: {rec.title.lower()}." + (f" Held back by: {'; '.join(limits)}" if limits else "")
+        if dropped:
+            names = ", ".join(f"{s.sport.value} ({s.kind})" for s in dropped)
+            summary += f" The week is behind, so it drops: {names}."
         return DayPlan(day=ctx.day, cap=cap, recommended=recommended, verdicts=verdicts, options=options,
-                       week_source=targets.source, week_phase=targets.phase, remaining_slots=remaining,
+                       week_source=targets.source, week_phase=targets.phase, remaining_slots=remaining, dropped_slots=dropped,
                        done_this_week=done, summary=summary)
 
     def to_session(self, plan: DayPlan, intensity: Intensity) -> PlannedSession:
@@ -169,7 +175,7 @@ class RulesPlanner(Planner):
             return SessionOption(intensity=level, title="No session in this week's plan", risk=risk, reasons=limiting)
         history = ctx.activities
         prescription = prescribe(slot.sport, level, history, kind=slot.kind, max_hr=self.max_hr,
-                                 volume_factor=volume_factor, today=ctx.day)
+                                 volume_factor=volume_factor, today=ctx.day, ride_bands=self.ride_bands)
         word = SPORT_WORD.get(slot.sport, slot.sport.value)
         detail = f" ({slot.kind})" if slot.kind not in ("general", "strength") else ""
         reasons = list(limiting)

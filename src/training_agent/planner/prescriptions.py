@@ -17,23 +17,28 @@ from training_agent.core.models import Activity, Intensity, Prescription, Sport
 EASY_BELOW, MODERATE_BELOW = 0.75, 0.85  # share of max heart rate
 HR_BANDS = {Intensity.EASY: (0.60, 0.75), Intensity.MODERATE: (0.75, 0.85), Intensity.HARD: (0.85, 0.92)}
 MIN_MINUTES = 20
-DURATION_CAP = {Intensity.MODERATE: 0.8, Intensity.HARD: 0.6}  # harder sessions are shorter than easy ones
+DURATION_CAP = {Intensity.MODERATE: 0.8, Intensity.HARD: 0.6}  # runs: harder sessions are shorter than easy ones
+DEFAULT_RIDE_BANDS = (120, 300)  # minutes: rides under 2 h are easy, 2-5 h moderate, over 5 h hard (the athlete's own view)
 MIN_HR_WIDTH = 6  # beats per minute
 
 # Fallbacks until there is enough history: (duration in minutes, pace min/km for runs or speed km/h for rides).
 DEFAULTS = {
     (Sport.RUN, Intensity.EASY): (40, 7.0), (Sport.RUN, Intensity.MODERATE): (50, 6.4), (Sport.RUN, Intensity.HARD): (50, 5.8),
-    (Sport.BIKE, Intensity.EASY): (90, 20.0), (Sport.BIKE, Intensity.MODERATE): (75, 24.0), (Sport.BIKE, Intensity.HARD): (60, 27.0),
+    (Sport.BIKE, Intensity.EASY): (90, 21.0), (Sport.BIKE, Intensity.MODERATE): (210, 22.0), (Sport.BIKE, Intensity.HARD): (330, 22.0),
     (Sport.GYM, Intensity.EASY): (45, None), (Sport.GYM, Intensity.MODERATE): (50, None), (Sport.GYM, Intensity.HARD): (55, None),
 }
 
 
 SPORTS_WITH_TARGETS = {sport for sport, _ in DEFAULTS}  # adding a sport = adding its DEFAULTS rows
-ENDURANCE_SPORTS = (Sport.RUN, Sport.BIKE)  # sports whose harder sessions are shorter than easy ones
+SHORTER_WHEN_HARDER = (Sport.RUN,)  # rides are the opposite: a harder ride is a longer ride
 
 
-def classify(a: Activity, max_hr: float) -> Intensity | None:
-    """Easy / moderate / hard from heart rate, else from the athlete's own 1-10 rating, else unknown."""
+def classify(a: Activity, max_hr: float, ride_bands: tuple[float, float] = DEFAULT_RIDE_BANDS) -> Intensity | None:
+    """Easy / moderate / hard. Rides go by duration (the athlete's own bands); everything else by heart rate,
+    else by the athlete's own 1-10 rating, else unknown."""
+    if a.sport == Sport.BIKE:
+        minutes = a.duration_s / 60
+        return Intensity.EASY if minutes < ride_bands[0] else Intensity.MODERATE if minutes < ride_bands[1] else Intensity.HARD
     if a.avg_hr:
         share = a.avg_hr / max_hr
         return Intensity.EASY if share < EASY_BELOW else Intensity.MODERATE if share < MODERATE_BELOW else Intensity.HARD
@@ -63,7 +68,8 @@ def _target_distance(kind: str) -> float | None:
 
 def prescribe(sport: Sport, intensity: Intensity, history: list[Activity], *, kind: str = "general",
               max_hr: float = 195, volume_factor: float = 1.0, today: date | None = None,
-              lookback_days: int = 180, min_pool: int = 3) -> Prescription | None:
+              lookback_days: int = 180, min_pool: int = 3,
+              ride_bands: tuple[float, float] = DEFAULT_RIDE_BANDS) -> Prescription | None:
     """Targets for one session, or None for rest and for sports without targets."""
     if intensity == Intensity.REST or sport not in SPORTS_WITH_TARGETS:
         return None
@@ -74,7 +80,7 @@ def prescribe(sport: Sport, intensity: Intensity, history: list[Activity], *, ki
             continue
         if today and not (today - timedelta(days=lookback_days) <= a.start_time.date() < today):
             continue
-        bucket = classify(a, max_hr)
+        bucket = classify(a, max_hr, ride_bands)
         if sport == Sport.GYM or bucket == intensity:  # gym heart rate says little, so all gym sessions count
             pool.append(a)
 
@@ -100,15 +106,16 @@ def prescribe(sport: Sport, intensity: Intensity, history: list[Activity], *, ki
     paces = [a.duration_s / 60 / (a.distance_m / 1000) for a in with_distance]
     speeds = [(a.distance_m / 1000) / (a.duration_s / 3600) for a in with_distance]
     hrs = [a.avg_hr for a in pool if a.avg_hr]
+    climbs = [a.elevation_gain_m for a in pool if a.elevation_gain_m]
 
     q = _volume_quantile(kind)
     minutes = _quantile(minutes_list, q)
     pace = median(paces) if sport == Sport.RUN and paces else None
     speed = median(speeds) if sport == Sport.BIKE and speeds else None
     distance = _target_distance(kind)
-    if intensity in DURATION_CAP and not distance and sport in ENDURANCE_SPORTS:
+    if intensity in DURATION_CAP and not distance and sport in SHORTER_WHEN_HARDER:
         easy = prescribe(sport, Intensity.EASY, history, kind=kind, max_hr=max_hr, today=today,
-                         lookback_days=lookback_days, min_pool=min_pool)
+                         lookback_days=lookback_days, min_pool=min_pool, ride_bands=ride_bands)
         minutes = min(minutes, easy.duration_min * DURATION_CAP[intensity])
     if distance and pace:
         minutes = distance * pace  # a fixed distance sets the time
@@ -122,10 +129,16 @@ def prescribe(sport: Sport, intensity: Intensity, history: list[Activity], *, ki
             mid = (hr_low + hr_high) / 2
             hr_low, hr_high = round(mid - MIN_HR_WIDTH / 2), round(mid + MIN_HR_WIDTH / 2)
 
-    effort_note = "" if sport != Sport.GYM else " Effort comes from the weights, not heart rate."
+    effort_note = ""
+    if sport == Sport.GYM:
+        effort_note = " Effort comes from the weights, not heart rate."
+    elif sport == Sport.BIKE:
+        effort_note = (f" Rides under {ride_bands[0]:.0f} min count as easy for you, {ride_bands[0]:.0f}-{ride_bands[1]:.0f} "
+                       f"moderate, over {ride_bands[1]:.0f} hard.")
     return Prescription(
         sport=sport, intensity=intensity, duration_min=round(minutes * volume_factor),
         distance_km=round(distance * volume_factor, 1) if distance else None,
         pace_min_per_km=round(pace, 2) if pace else None, speed_kmh=round(speed, 1) if speed else None,
+        elevation_gain_m=round(median(climbs)) if sport == Sport.BIKE and climbs else None,
         hr_low=hr_low, hr_high=hr_high, based_on=len(pool),
         note=f"Based on {len(pool)} of your {intensity.value} {sport.value} sessions.{effort_note}")

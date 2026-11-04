@@ -59,3 +59,26 @@ def week_progress(targets: WeekTargets, activities: list, day: date, long_ride_m
         if rest:
             remaining.remove(rest)
     return remaining, done
+
+
+DROP_ORDER = ["strength", "short", "long"]  # dropped first to last; other kinds (key sessions) are dropped last
+
+
+def fit_to_days(remaining: list, day: date):
+    """Drop sessions the week no longer has room for (a rest slot still owed keeps its day).
+
+    Returns (kept, dropped). Strength goes first, then the short ride, then the long ride.
+    """
+    from training_agent.core.models import Sport
+
+    days_left = 7 - day.weekday()  # including today
+    rest_owed = sum(1 for s in remaining if s.sport == Sport.REST)
+    capacity = max(days_left - rest_owed, 0)
+    sessions = [s for s in remaining if s.sport != Sport.REST]
+    kept, dropped = list(remaining), []
+    while len(sessions) > capacity:
+        victim = min(sessions, key=lambda s: DROP_ORDER.index(s.kind) if s.kind in DROP_ORDER else len(DROP_ORDER))
+        sessions.remove(victim)
+        kept.remove(victim)
+        dropped.append(victim)
+    return kept, dropped

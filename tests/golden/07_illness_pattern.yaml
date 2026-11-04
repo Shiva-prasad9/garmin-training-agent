@@ -1,0 +1,10 @@
+description: Resting HR up and HRV down together. Possible illness, so rest.
+weekday: wed
+metrics:
+  - {days_ago: 0, resting_hr: 52, hrv: 46}
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+expect:
+  cap: rest
+  recommended: rest
+  risk: {rest: recommended, easy: caution, moderate: not_advised, hard: not_advised}
+  reasons_contain: ["possible illness"]

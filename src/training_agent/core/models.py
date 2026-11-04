@@ -176,6 +176,7 @@ class Prescription(BaseModel):
     distance_km: float | None = None
     pace_min_per_km: float | None = None  # runs
     speed_kmh: float | None = None  # rides
+    elevation_gain_m: float | None = None  # rides: typical climbing for sessions like this
     hr_low: int | None = None
     hr_high: int | None = None
     based_on: int = 0  # number of past sessions behind these numbers
@@ -231,5 +232,6 @@ class DayPlan(BaseModel):
     week_source: str = ""
     week_phase: str = ""
     remaining_slots: list[SessionSlot] = Field(default_factory=list)
+    dropped_slots: list[SessionSlot] = Field(default_factory=list)  # sessions dropped because the week ran out of days
     done_this_week: list[str] = Field(default_factory=list)
     summary: str = ""

@@ -1,0 +1,10 @@
+description: A 1.8 hour night with an implausible HRV spike (watch not worn). Careful, but not easy or rest.
+weekday: wed
+metrics:
+  - {days_ago: 0, sleep_hours: 1.8, sleep_score: 30, hrv: 105}
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+expect:
+  cap: moderate
+  recommended: moderate
+  risk: {hard: caution}
+  reasons_contain: ["Very short night"]

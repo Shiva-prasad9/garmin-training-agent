@@ -1,0 +1,13 @@
+description: Sunday, every session of the week done and no rest day yet. Rest is recommended; any other session is an extra.
+weekday: sun
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+activities:
+  - {days_ago: 6, sport: gym, minutes: 50, load: 8, hr: 95}
+  - {days_ago: 5, sport: run, minutes: 60, load: 90}
+  - {days_ago: 4, sport: gym, minutes: 50, load: 8, hr: 95}
+  - {days_ago: 3, sport: bike, minutes: 200, load: 120}
+  - {days_ago: 2, sport: gym, minutes: 50, load: 8, hr: 95}
+  - {days_ago: 1, sport: bike, minutes: 60, load: 60}
+expect:
+  recommended: rest
+  reasons_contain: ["Extra session"]

@@ -116,3 +116,14 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Each option previews tomorrow (alternation and weekly rules re-run with the planned session; rules that need tomorrow's own readings are skipped). Sessions are shortened (x0.85) the day after a hard one.
 - Slot choice: kind-vs-intensity suitability (long ride = easy/moderate, short ride and 10k = hard key sessions, strength = easy/moderate), avoids the same endurance sport two days running, offers an "extra session" when the week's template is complete.
 - 86 tests pass (new `test_rules_planner.py`). Real data, Wed 4 Nov: allowed easy (sleep score unusually low, resting HR trending up), recommended easy short ride; moderate is "caution", hard is "not advised" with tomorrow capped at easy.
+
+### Step 19: Corrections after the first planner output (2026-11-04)
+- The athlete's own ride definition replaces the heart-rate buckets for rides: under 2 h easy, 2-5 h moderate, over 5 h hard (`ride_bands_min: [120, 300]` in `config/athlete.yaml`). "Harder is shorter" now applies to runs only; a harder ride is a longer ride. Ride targets include typical climbing (elevation gain, from Strava and now Garmin too). Note: durations are moving time; the athlete thinks in elapsed time with breaks, so bands may need tuning after the first trial.
+- Suitability of session kinds: a long ride suits moderate/hard days, a short ride easy/moderate days.
+- When the week is behind (more sessions open than days left, keeping a rest day if one is still owed) the planner drops sessions: strength first, then the short ride, then the long ride; key sessions last. Shown as `dropped_slots` and in the summary.
+- 90 tests pass.
+
+### Step 20: Golden-day scenarios (2026-11-04)
+- `tests/test_golden_days.py` runs 12 fixed scenarios from `tests/golden/*.yaml` through the real planner with the real thresholds (format in `tests/golden/README.md`). Scenarios: fresh and rested (key session), the real 1 Nov pattern, day after a hard run, short night (no false alarm), missing sleep/HRV, weekly load spike, illness pattern (rest), declining HRV trend with a fine day, override (hard chosen while easy recommended), week behind (drops a gym session), complete week (rest), planned hard session yesterday.
+- Two expectations were corrected while writing them (wording of the weekly reason; a weekly spike also follows a 320-load day), not the planner. 98 tests pass.
+- Rule: golden days run before every merge; changing a threshold changes outcomes here on purpose.

@@ -9,3 +9,7 @@ weekly_template:
   - {sport: bike, kind: long,     count: 1}
   - {sport: gym,  kind: strength, count: 3}
   - {sport: rest, kind: rest,     count: 1}
+
+# Rides are easy, moderate or hard by duration, in minutes: under the first number is easy,
+# up to the second is moderate, longer is hard. This is how you described your own rides.
+ride_bands_min: [120, 300]

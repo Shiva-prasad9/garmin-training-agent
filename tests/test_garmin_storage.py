@@ -40,9 +40,9 @@ def test_parse_metrics_missing_everything_returns_none():
 
 
 def test_parse_activity_without_hr():
-    a = parse_activity({"activityId": 1, "startTimeGMT": "2026-10-31 07:00:00", "duration": 3600.0,
+    a = parse_activity({"activityId": 1, "startTimeGMT": "2026-10-31 07:00:00", "duration": 3600.0, "elevationGain": 540.0,
                         "activityType": {"typeKey": "road_biking"}})
-    assert a.sport == Sport.BIKE and a.avg_hr is None and a.hr_zone_seconds is None
+    assert a.sport == Sport.BIKE and a.avg_hr is None and a.hr_zone_seconds is None and a.elevation_gain_m == 540.0
 
 
 def test_storage_roundtrip_and_upsert(tmp_path):

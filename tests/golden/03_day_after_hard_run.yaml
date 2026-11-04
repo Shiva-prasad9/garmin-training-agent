@@ -1,0 +1,9 @@
+description: Recovery is fine, but yesterday's run was hard. Hard/easy alternation caps the day at easy.
+weekday: wed
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+activities:
+  - {days_ago: 1, sport: run, minutes: 70, load: 320, hr: 172, zones: [0, 0, 0, 1500, 1500]}
+expect:
+  cap: easy
+  risk: {moderate: caution}
+  reasons_contain: ["Yesterday's run was a hard session"]

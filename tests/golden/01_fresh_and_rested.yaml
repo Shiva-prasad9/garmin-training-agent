@@ -1,0 +1,9 @@
+description: Midweek, everything normal, no hard session for days. The planner may suggest a key session.
+weekday: wed
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+expect:
+  cap: hard
+  recommended: hard
+  title_starts: {hard: "Hard"}
+  risk: {hard: recommended, moderate: ok, easy: ok}
+  reasons_contain: ["Recovery signals look normal"]

@@ -143,3 +143,26 @@ def test_a_different_plan_source_changes_what_is_offered_without_touching_the_pl
     plan = planner(sources=[EventLikePlan(), FixedTemplate()]).plan_day(make_context(activities=history(DAY)))
     assert plan.week_source == "event_like" and plan.week_phase == "build"
     assert all("run" in o.title.lower() for o in plan.options if o.sport is not None)
+
+
+def test_a_week_that_is_behind_drops_gym_sessions_first():
+    plan = planner().plan_day(make_context(activities=history(DAY)))  # Wednesday, nothing done: 6 sessions, 5 days
+    assert [s.kind for s in plan.dropped_slots] == ["strength"]
+    assert sum(1 for s in plan.remaining_slots if s.kind == "strength") == 2
+    assert {"10k", "short", "long"} <= {s.kind for s in plan.remaining_slots}  # key sessions are kept
+    assert "behind" in plan.summary
+
+
+def test_a_week_with_room_drops_nothing():
+    monday = START + timedelta(days=SUNDAY - 7)
+    plan = planner().plan_day(make_context(n=SUNDAY - 6, activities=history(monday)))
+    assert plan.dropped_slots == []
+
+
+def test_rest_day_is_protected_when_dropping():
+    from training_agent.planner.week_plan import fit_to_days
+    template = FixedTemplate().targets_for_week(date(2026, 2, 9))
+    kept, dropped = fit_to_days(template.slots, date(2026, 2, 13))  # Friday: 3 days left, rest still owed
+    assert sum(1 for s in kept if s.sport == Sport.REST) == 1
+    assert len(kept) - 1 == 2 and len(dropped) == 4  # two sessions fit next to the rest day; gym, short ride, then gym go
+    assert [s.kind for s in dropped][:3] == ["strength", "strength", "strength"]

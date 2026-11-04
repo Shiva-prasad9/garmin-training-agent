@@ -98,6 +98,7 @@ def parse_activity(a: dict) -> Activity:
         avg_hr=a.get("averageHR"),
         max_hr=a.get("maxHR"),
         training_load=a.get("activityTrainingLoad"),
+        elevation_gain_m=a.get("elevationGain"),
         hr_zone_seconds=None if all(z is None for z in zones) else [z or 0.0 for z in zones],
         raw_ref=f"activities/{a['activityId']}",
     )

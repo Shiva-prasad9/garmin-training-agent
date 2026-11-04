@@ -1,0 +1,13 @@
+description: Six low HRV nights in a row, tonight is normal. The trend alone caps the day at moderate.
+weekday: wed
+metrics:
+  - {days_ago: 1, hrv: 46}
+  - {days_ago: 2, hrv: 46}
+  - {days_ago: 3, hrv: 46}
+  - {days_ago: 4, hrv: 46}
+  - {days_ago: 5, hrv: 46}
+  - {days_ago: 6, hrv: 46}
+history: {every: 2, loads: [70, 90, 130, 80, 100, 120], sports: [bike, run]}
+expect:
+  cap: moderate
+  reasons_contain: ["trending worse"]
