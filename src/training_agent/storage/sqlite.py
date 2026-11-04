@@ -82,6 +82,12 @@ class SqliteRepository(Repository):
                 for name, kind in columns.items():
                     if name not in have:
                         con.execute(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")
+        self._repair_sport_labels()
+
+    def _repair_sport_labels(self) -> None:
+        """Workouts stored before swimming was its own sport were filed as "other"; relabel them (idempotent)."""
+        with self._connect() as con:
+            con.execute("UPDATE activities SET sport = 'swim' WHERE sport = 'other' AND lower(source_sport) LIKE '%swim%'")
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self._path)
@@ -99,6 +105,14 @@ class SqliteRepository(Repository):
     def save_plan(self, sessions: list[PlannedSession]) -> None:
         with self._connect() as con:
             _upsert(con, "planned_sessions", sessions)
+
+    def delete_plan(self, day: date) -> None:
+        with self._connect() as con:
+            con.execute("DELETE FROM planned_sessions WHERE date = ?", (day.isoformat(),))
+
+    def delete_activity(self, activity_id: str) -> None:
+        with self._connect() as con:
+            con.execute("DELETE FROM activities WHERE id = ?", (activity_id,))
 
     def get_plan(self, start: date, end: date) -> list[PlannedSession]:
         with self._connect() as con:

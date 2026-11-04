@@ -30,6 +30,8 @@ def _sport(strava_type: str) -> Sport:
         return Sport.RUN
     if any(x in t for x in ("weight", "workout", "strength", "crossfit")):
         return Sport.GYM
+    if "swim" in t:
+        return Sport.SWIM
     return Sport.OTHER
 
 

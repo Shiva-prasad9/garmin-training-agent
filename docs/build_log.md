@@ -127,3 +127,14 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - `tests/test_golden_days.py` runs 12 fixed scenarios from `tests/golden/*.yaml` through the real planner with the real thresholds (format in `tests/golden/README.md`). Scenarios: fresh and rested (key session), the real 1 Nov pattern, day after a hard run, short night (no false alarm), missing sleep/HRV, weekly load spike, illness pattern (rest), declining HRV trend with a fine day, override (hard chosen while easy recommended), week behind (drops a gym session), complete week (rest), planned hard session yesterday.
 - Two expectations were corrected while writing them (wording of the weekly reason; a weekly spike also follows a 320-load day), not the planner. 98 tests pass.
 - Rule: golden days run before every merge; changing a threshold changes outcomes here on purpose.
+
+### Step 21: Daily quest, week panel and gym log on the dashboard (2026-11-04)
+- API: `GET /api/plan` (recommendation + options + what was chosen), `POST /api/plan/choose` (any option, including above the cap; replaces an earlier choice; recorded with the recommendation, flags and warnings), `POST /api/plan/clear`, `GET/POST/DELETE /api/gym`.
+- Safety: changes are only accepted from the computer the dashboard runs on (reading is open with `--lan`), since there is no login. Inputs are validated (gym minutes 5-300, effort 1-10, day within 14 days).
+- Gym log: manual sessions are stored as activities with source `manual` (stable id `manual:gym:<date>:<n>`), count towards the week's strength slots and the load estimate (scaled by the 1-10 rating), and show on the dashboard. Strava stays hidden. `estimate_effort` now gives strength work a small load estimate.
+- Frontend: Daily quest panel (recommendation, four option cards with targets, risk label with icon + words, tomorrow preview, Plan this / Undo, override banner), "This week" panel (done / open / dropped), Gym log panel. Panels redraw after any change. Storage gains `delete_plan` and `delete_activity`.
+- 110 tests pass. Not yet seen in a browser.
+
+### Step 22: Review of the new dashboard panels (2026-11-04)
+- The athlete tried the dashboard: choosing, the week panel and the gym log all worked (a gym entry showed in This week and Activities).
+- Fixes from the screenshots: swimming is now its own sport (`Sport.SWIM`; Garmin "lap swimming" and Strava "Swim" map to it; stored rows relabelled on startup; yellow `--s-swim`, validated light and dark); the 7-day trend badge on the status card sits on its own line without a stray space; the quest headline no longer repeats the recommendation. `docs/extending.md` updated. 113 tests pass.

@@ -67,3 +67,8 @@ def test_dashboard_ignores_strava_only_workouts(tmp_path):
     data = build_overview(repo, days=10)
     assert [a["id"] for a in data["activities"]] == ["garmin:1", "garmin:2"]
     assert data["weekly_load"][-1]["run"] == 50.0  # Garmin run only
+
+
+def test_weekly_load_has_a_swim_column(tmp_path):
+    data = build_overview(_repo(tmp_path), days=10)
+    assert set(data["weekly_load"][0]) == {"week", "bike", "run", "gym", "swim", "other"}

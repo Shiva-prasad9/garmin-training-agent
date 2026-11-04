@@ -20,6 +20,7 @@ class Sport(str, Enum):
     RUN = "run"
     BIKE = "bike"
     GYM = "gym"
+    SWIM = "swim"
     REST = "rest"
     OTHER = "other"
 

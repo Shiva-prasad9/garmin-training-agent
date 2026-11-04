@@ -56,3 +56,6 @@ The weekly load limit compares the last 7 days with the average week over the 8 
 
 ## D018 (2026-11-04): Keep sports and plans open to extension
 The weekly template is configuration only (`config/athlete.yaml`). A week plan source (template today, event plan later) answers "what should this week contain", so an event overrides the template without editing core code. Adding a sport such as swimming is a documented checklist (`docs/extending.md`); not done yet by choice.
+
+## D019 (2026-11-04): The athlete decides; writes stay local
+Every option the planner offers can be chosen; labels and warnings inform but never block. A choice above the cap is stored as an override together with the recommendation, so later analysis can check how overrides turned out. The dashboard accepts changes only from the computer it runs on (no login). The web layer calls the planner through its plugin loader and `build_context`; this is the second documented exception to "no stage imports another's internals".

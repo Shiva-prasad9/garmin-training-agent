@@ -46,6 +46,8 @@ def _sport(type_key: str | None) -> Sport:
         return Sport.BIKE
     if any(x in k for x in ("strength", "gym", "fitness_equipment")):
         return Sport.GYM
+    if "swim" in k:
+        return Sport.SWIM
     return Sport.OTHER
 
 

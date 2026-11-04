@@ -55,3 +55,26 @@ def test_storage_roundtrip_and_upsert(tmp_path):
     assert len(repo.get_metrics(DAY, DAY)) == 1
     got = repo.get_activities(DAY, DAY)[0]
     assert got.sport == Sport.RUN and got.hr_zone_seconds == [5.0, 0.0, 0.0, 0.0, 0.0]
+
+
+def test_swimming_is_its_own_sport_for_both_sources():
+    from training_agent.collectors.strava_export import parse_rows
+    g = parse_activity({"activityId": 7, "startTimeGMT": "2026-11-03 17:00:00", "duration": 1200.0,
+                        "activityType": {"typeKey": "lap_swimming"}})
+    assert g.sport == Sport.SWIM
+    header = ["Activity ID", "Activity Date", "Activity Type", "Moving Time", "Distance"]
+    acts, _ = parse_rows([header, ["9", "Nov 3, 2026, 5:00:00 PM", "Swim", "1200", "600"]])
+    assert acts[0].sport == Sport.SWIM
+
+
+def test_old_rows_filed_as_other_are_relabelled_as_swim(tmp_path):
+    import sqlite3
+    path = tmp_path / "t.sqlite"
+    repo = SqliteRepository(path)
+    old = parse_activity({"activityId": 8, "startTimeGMT": "2026-11-03 17:00:00", "duration": 1200.0,
+                          "activityType": {"typeKey": "lap_swimming"}})
+    repo.save_activities([old])
+    with sqlite3.connect(path) as con:
+        con.execute("UPDATE activities SET sport = 'other'")  # how it was stored before swimming existed
+    reopened = SqliteRepository(path)
+    assert reopened.get_activities(DAY, date(2026, 11, 3))[0].sport == Sport.SWIM

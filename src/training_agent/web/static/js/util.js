@@ -51,7 +51,7 @@ export function zStatus(z) {
   return { cls: "crit", icon: "!", label: `Unusual, ${dir} usual`, dir };
 }
 
-export const SPORT_NAMES = { bike: "Cycling", run: "Running", gym: "Strength", other: "Other" };
+export const SPORT_NAMES = { bike: "Cycling", run: "Running", gym: "Strength", swim: "Swimming", other: "Other" };
 export const cssVar = (name) => `var(--${name})`;
 
 export function prettify(s) {

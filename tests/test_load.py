@@ -30,7 +30,11 @@ def test_duration_estimate_is_last_resort():
     rates = load_rates([act(i=i, avg_hr=140.0, training_load=120.0) for i in range(3)])  # 2.0 per minute
     e = estimate_effort(act(avg_hr=None, minutes=100), rates)
     assert e.source == "duration_estimate" and round(e.value) == 200
-    assert estimate_effort(act(sport=Sport.GYM, avg_hr=None, minutes=60), rates).source == "none"
+    gym = estimate_effort(act(sport=Sport.GYM, avg_hr=None, minutes=60), rates)
+    assert gym.source == "duration_estimate" and round(gym.value, 1) == 9.0  # strength: a small load
+    harder = estimate_effort(act(sport=Sport.GYM, avg_hr=None, minutes=60, perceived_exertion=8.0), rates)
+    assert harder.value > gym.value  # the athlete's rating scales the estimate
+    assert estimate_effort(act(sport=Sport.OTHER, avg_hr=None, minutes=60), rates).source == "none"
 
 
 def test_default_rate_until_enough_history():

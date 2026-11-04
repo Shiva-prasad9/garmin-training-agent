@@ -29,10 +29,10 @@ function meter(s) {
 // 7-day trend, worded by whether the direction is good for this signal (icon + word, never colour alone).
 function trendBadge(sig, good, unit, dec = 0) {
   if (sig.trend == null) return el("div", { class: "badge", text: "7-day: not enough data" });
-  if (sig.trend === "steady") return el("div", { class: "badge", text: `\u2194 7-day: steady (avg ${fmtNum(sig.trend_mean, dec)} ${unit})` });
+  if (sig.trend === "steady") return el("div", { class: "badge", text: `\u2194 7-day: steady (avg ${fmtNum(sig.trend_mean, dec)}${unit ? " " + unit : ""})` });
   const better = (sig.trend === "up") === (good === 1);
   return el("div", { class: `badge ${better ? "good" : "warn"}` },
-    `${sig.trend === "up" ? "\u25B2" : "\u25BC"} 7-day: ${better ? "improving" : "declining"} (avg ${fmtNum(sig.trend_mean, dec)} ${unit})`);
+    `${sig.trend === "up" ? "\u25B2" : "\u25BC"} 7-day: ${better ? "improving" : "declining"} (avg ${fmtNum(sig.trend_mean, dec)}${unit ? " " + unit : ""})`);
 }
 
 function card(def, sig) {

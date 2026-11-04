@@ -18,7 +18,7 @@ from training_agent.core.models import Activity, Sport
 STRAVA_TO_LOAD = 1.42  # Garmin-scale load per Strava relative-effort point (calibrated on 21 workouts)
 MIN_GARMIN_LOAD = 1.0  # below this Garmin's load means "nothing recorded" (rides without heart rate)
 MIN_RATE_SAMPLES = 3
-DEFAULT_RATE = {Sport.BIKE: 1.3, Sport.RUN: 2.5}  # load per minute, used until enough history exists
+DEFAULT_RATE = {Sport.BIKE: 1.3, Sport.RUN: 2.5, Sport.GYM: 0.15}  # load per minute, used until enough history exists
 MIN_EFFORT_MINUTES = 20
 
 
@@ -60,7 +60,8 @@ def estimate_effort(a: Activity, rates: dict[Sport, float]) -> Effort:
         return Effort(a.perceived_relative_effort * STRAVA_TO_LOAD, "perceived_effort")
     rate = rates.get(a.sport) or DEFAULT_RATE.get(a.sport)
     if rate and a.duration_s >= 5 * 60:
-        return Effort(a.duration_s / 60 * rate, "duration_estimate")
+        scale = min(max(a.perceived_exertion / 5, 0.4), 2.0) if a.perceived_exertion else 1.0  # rating 5 = typical
+        return Effort(a.duration_s / 60 * rate * scale, "duration_estimate")
     return Effort(0.0, "none")
 
 

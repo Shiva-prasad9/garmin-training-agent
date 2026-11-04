@@ -16,7 +16,7 @@
   --glow: rgba(59, 52, 212, 0.22);
   --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
   --good-ink: #006300; --warn-ink: #7a5600; --crit-ink: #a52020;
-  --s-bike: #2a78d6; --s-run: #eb6834; --s-gym: #1baf7a; --s-other: #6250d6;
+  --s-bike: #2a78d6; --s-run: #eb6834; --s-gym: #1baf7a; --s-swim: #eda100; --s-other: #6250d6;
   --line-hrv: #2a78d6; --line-sleep: #6250d6; --line-rhr: #e34948; --line-bb: #1baf7a;
   --z1: #cde2fb; --z2: #86b6ef; --z3: #3987e5; --z4: #1c5cab; --z5: #0d366b;
 }
@@ -30,7 +30,7 @@
   --line: #2b3070; --grid: #232859;
   --accent: #8d9bff; --accent-soft: rgba(141, 155, 255, 0.14); --glow: rgba(110, 130, 255, 0.35);
   --good-ink: #0ca30c; --warn-ink: #fab219; --crit-ink: #ec6a6a;
-  --s-bike: #3987e5; --s-run: #d95926; --s-gym: #199e70; --s-other: #9085e9;
+  --s-bike: #3987e5; --s-run: #d95926; --s-gym: #199e70; --s-swim: #c98500; --s-other: #9085e9;
   --line-hrv: #3987e5; --line-sleep: #9085e9; --line-rhr: #e66767; --line-bb: #199e70;
 }
 
@@ -145,3 +145,41 @@ td { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { main { transition: none; } }
 
 @media (max-width: 520px) { .panel-trends .grid { grid-template-columns: 1fr; } }
+
+/* week, quest, gym log */
+.panel-status { grid-column: span 8; } .panel-week { grid-column: span 4; } .panel-quest { grid-column: span 12; }
+@media (max-width: 880px) { .panel-status, .panel-week { grid-column: span 12; } }
+h3.mini { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin: 14px 0 6px; }
+ul.plain { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 0.9rem; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.small { font-size: 0.8rem; }
+.quest-head .big { font-size: 1.45rem; font-weight: 700; }
+.summary { color: var(--ink-2); margin: 6px 0 14px; max-width: 80ch; }
+.options { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.opt { display: grid; gap: 8px; align-content: start; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 14px; }
+.opt.recommended { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 8px 26px -14px var(--glow); }
+.opt.selected { background: var(--accent-soft); }
+.opt-level { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.opt h3 { font-size: 1.05rem; }
+dl.targets { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: 0.86rem; }
+dl.targets dt { color: var(--muted); } dl.targets dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+ul.why { margin: 0; padding-left: 18px; font-size: 0.8rem; color: var(--ink-2); display: grid; gap: 3px; }
+.tomorrow { font-size: 0.8rem; color: var(--ink-2); margin: 0; }
+.plan-btn { border: 1px solid var(--accent); background: var(--accent); color: #fff; border-radius: 6px; padding: 8px 14px; font: inherit; font-weight: 600; cursor: pointer; justify-self: start; }
+:root[data-theme="dark"] .plan-btn { color: #0b0d24; }
+.plan-btn:hover:not([disabled]) { filter: brightness(1.1); }
+.plan-btn[disabled] { opacity: 0.55; cursor: default; }
+.plan-btn.done { background: transparent; color: var(--accent); }
+.chosen { display: flex; gap: 14px; align-items: center; justify-content: space-between; border: 1px solid var(--accent); background: var(--accent-soft);
+          border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; }
+.chosen.over { border-color: var(--warn); }
+.form-msg { color: var(--crit-ink); font-size: 0.85rem; min-height: 1.2em; margin: 8px 0 0; }
+.gym-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.field { display: grid; gap: 4px; font-size: 0.8rem; color: var(--ink-2); }
+.field input, .field select { font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); min-width: 96px; }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.gym-list li { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line); }
+button.ghost.small { padding: 3px 9px; font-size: 0.78rem; }
+
+.badge { display: flex; }
+.status-head .badge { margin-top: 2px; }

@@ -2,7 +2,7 @@
 import { el, fmtDay, fmtDuration, fmtNum, prettify, watchWidth, SPORT_NAMES } from "../util.js";
 import { stackedBars } from "../charts.js";
 
-const SPORTS = ["bike", "run", "gym", "other"];
+const SPORTS = ["bike", "run", "gym", "swim", "other"];
 const COLORS = Object.fromEntries(SPORTS.map((s) => [s, `var(--s-${s})`]));
 const ZONE_COLORS = ["var(--z1)", "var(--z2)", "var(--z3)", "var(--z4)", "var(--z5)"];
 

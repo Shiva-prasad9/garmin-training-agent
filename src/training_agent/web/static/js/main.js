@@ -1,4 +1,4 @@
-import { getOverview } from "./api.js";
+import { getOverview, getPlan } from "./api.js";
 import { panels } from "./panels/index.js";
 import { el, fmtDay } from "./util.js";
 
@@ -32,8 +32,10 @@ markRange();
 
 async function load() {
   main.classList.add("loading"); // keep the previous render, just dim it
+  const scrollY = window.scrollY;
   try {
     const data = await getOverview(state.days);
+    data.plan = await getPlan().catch((err) => ({ error: err.message }));
     main.replaceChildren();
     if (data.empty) {
       subtitle.textContent = "No data yet";
@@ -45,8 +47,9 @@ async function load() {
     for (const p of panels) {
       const sec = el("section", { class: `panel panel-${p.id}` });
       main.append(sec);
-      p.render(sec, data, state);
+      try { p.render(sec, data, state); } catch (err) { sec.append(el("p", { class: "empty", text: `This panel could not be drawn: ${err.message}` })); }
     }
+    window.scrollTo(0, scrollY);
   } catch (err) {
     subtitle.textContent = "Could not load data";
     main.replaceChildren(el("section", { class: "panel" }, el("p", { text: `Error: ${err.message}` })));
@@ -55,3 +58,6 @@ async function load() {
   }
 }
 load();
+
+// Panels announce changes (a chosen session, a gym entry); redraw everything from fresh data.
+document.addEventListener("data-changed", () => load());
