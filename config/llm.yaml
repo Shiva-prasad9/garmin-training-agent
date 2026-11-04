@@ -1,0 +1,5 @@
+# Settings for the language-model layer (planner/llm_agent.py).
+# It needs ANTHROPIC_API_KEY in .env. Without a key, or if the call fails, the plan stays rules-only.
+model: claude-haiku-5-5
+max_tokens: 400
+timeout_s: 30

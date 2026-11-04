@@ -59,3 +59,6 @@ The weekly template is configuration only (`config/athlete.yaml`). A week plan s
 
 ## D019 (2026-11-04): The athlete decides; writes stay local
 Every option the planner offers can be chosen; labels and warnings inform but never block. A choice above the cap is stored as an override together with the recommendation, so later analysis can check how overrides turned out. The dashboard accepts changes only from the computer it runs on (no login). The web layer calls the planner through its plugin loader and `build_context`; this is the second documented exception to "no stage imports another's internals".
+
+## D020 (2026-11-04): The LLM chooses within the rules, never above them
+The rules planner sets the cap and builds every option. The language model may only pick an intensity at or below the cap and explain it; code enforces this, and any failure returns the rules plan. This keeps the safety behaviour deterministic and testable while the model adds judgment and plain-language reasons.

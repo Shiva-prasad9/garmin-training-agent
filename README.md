@@ -20,6 +20,7 @@ Pipeline: **collect → store → plan → publish**.
 1. `collectors/`: pull data (Garmin Personal API, Strava bulk export)
 2. `storage/`: persist to SQLite in `data/db/`
 3. `planner/`: deterministic rules (readiness-gated intensity, hard/easy alternation, weekly load limit) plus an LLM agent that explains its choice within those limits
+   (optional: put `ANTHROPIC_API_KEY` in `.env` to switch the LLM layer on; without it the plan is rules-only. Model in `config/llm.yaml`)
 4. `outputs/`: Google Calendar events and a daily email brief
 
 Stages communicate only through the data contracts in `src/training_agent/core/models.py`. Every feature is a plugin file implementing a stage's base class; `config/features.yaml` enables or disables plugins. A new feature is one new file plus one config line.

@@ -66,6 +66,8 @@ def format_brief(brief: DailyBrief) -> str:
             lines.append(f"  ({rec.prescription.note})")
     if rec.tomorrow:
         lines.append(f"  {rec.tomorrow}")
+    if plan.coach_note:
+        lines += ["", f"Coach note ({plan.decided_by}): {plan.coach_note}"]
     lines += ["", "Your options (any of them can be chosen on the dashboard):"]
     for o in plan.options:
         lines.append(f"  [{o.intensity.value:8s}] {o.title}  - {RISK_WORDS.get(o.risk, o.risk)}")

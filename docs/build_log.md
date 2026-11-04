@@ -149,3 +149,10 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 ### Step 24: Small fixes, and a leaked key found before going public (2026-11-04)
 - The Strava archive no longer runs in the daily run (`daily_run: false` in `features.yaml`, honoured by `load_enabled_plugins(..., require="daily_run")`); the brief now starts with a "Recovery today" line (sleep, HRV, resting HR, Body Battery).
 - Audit before making the repo public: the live Garmin API key was in the tracked `.env.example` (in every commit from the Strava/collector commit on, and pushed). Cause: the key was saved into the example file; earlier checks looked at file names only. Fixed in the working tree (names only). Added `tests/test_repo_hygiene.py` (scans tracked file contents for key patterns, requires `.env.example` to hold names only, forbids private or generated files) and rule 9 in `CLAUDE.md`. The key must be revoked and replaced; history still contains it until rewritten or the repository is recreated.
+
+### Step 25: The LLM layer (2026-11-04)
+- New planner plugin `planner/llm_agent.py` (+ `llm_client.py`, `config/llm.yaml`). It wraps the rules planner: the rules still set the cap and build every option; the model picks one intensity at or below the cap and writes a 2-3 sentence coach note. `DayPlan` gains `decided_by` and `coach_note`.
+- Guardrails in code (D020): a choice above the cap, an unknown intensity, an API error or a missing `ANTHROPIC_API_KEY` all return the rules plan unchanged. Answers are cached per day and per facts in `data/cache/llm/` (git-ignored), so the dashboard does not call the model on every refresh.
+- Privacy: the model sees only a compact summary (rule reasons, the options, workouts of the last 7 days: sport, minutes, load). No raw files, no key, no name.
+- Plain `httpx` call with a forced tool (structured answer); no SDK needed. Model set in `config/llm.yaml`.
+- 7 new tests with a fake client (133 total). Real run without a key: falls back to the rules plan as designed.

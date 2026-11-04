@@ -228,6 +228,8 @@ class DayPlan(BaseModel):
     dropped_slots: list[SessionSlot] = Field(default_factory=list)  # sessions dropped because the week ran out of days
     done_this_week: list[str] = Field(default_factory=list)
     summary: str = ""
+    decided_by: str = "rules"  # "rules", or "llm" when the language model chose among the allowed options
+    coach_note: str = ""  # plain-language explanation from the language model (empty when it was not used)
 
 
 class DailyBrief(BaseModel):

@@ -130,7 +130,7 @@ def test_the_real_config_loads_every_stage():
     from training_agent.pipeline import CONFIG
     names = {s: sorted(p.name for p in load_enabled_plugins(CONFIG, s)) for s in ("collectors", "storage", "planner", "outputs")}
     assert names == {"collectors": ["garmin_personal_api", "strava_export"], "storage": ["sqlite"],
-                     "planner": ["rules_planner"], "outputs": ["console_brief"]}
+                     "planner": ["llm_agent", "rules_planner"], "outputs": ["console_brief"]}
     # the Strava archive is a one-time import, so the daily run leaves it out
     daily = [p.name for p in load_enabled_plugins(CONFIG, "collectors", require="daily_run")]
     assert daily == ["garmin_personal_api"]

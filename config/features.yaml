@@ -37,12 +37,12 @@ week_plans:
     module: training_agent.planner.week_plans.fixed_template
 
 planner:
+  llm_agent:   # first enabled planner is used; it wraps rules_planner and falls back to it without a key
+    enabled: true
+    module: training_agent.planner.llm_agent
   rules_planner:
     enabled: true
     module: training_agent.planner.rules_planner
-  llm_agent:
-    enabled: false
-    module: training_agent.planner.llm_agent
 
 outputs:
   console_brief:

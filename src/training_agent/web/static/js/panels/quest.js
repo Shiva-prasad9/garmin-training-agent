@@ -76,6 +76,7 @@ export default {
         el("div", { class: "big", text: `Recommended: ${recommended ? recommended.title : plan.recommended}` })),
     ));
     sec.append(el("p", { class: "summary", text: plan.summary.replace(/^Recommended: [^.]*\.\s*/, "") }));
+    if (plan.coach_note) sec.append(el("p", { class: "summary", text: `Coach: ${plan.coach_note}` }));
 
     if (chosen) {
       sec.append(el("div", { class: `chosen ${chosen.overridden ? "over" : ""}`, role: "status" },
