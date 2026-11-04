@@ -192,3 +192,25 @@ class SessionOption(BaseModel):
     risk: str = "recommended"  # "recommended" | "caution" | "not_advised"
     reasons: list[str] = Field(default_factory=list)
     tomorrow: str | None = None  # what choosing this means for the next day
+
+
+class SessionSlot(BaseModel):
+    """One session that a week's plan calls for (the plan says WHAT; the daily planner decides WHEN).
+
+    kind examples: "long", "short", "10k", "strength", "tempo", "intervals", "recovery", "rest".
+    """
+
+    sport: Sport
+    kind: str = "general"
+    intensity: Intensity | None = None  # set when the plan wants a specific level, else the rules decide
+
+
+class WeekTargets(BaseModel):
+    """What one week should contain, from whichever plan source is active (template, event plan, ...)."""
+
+    week_start: date  # a Monday
+    source: str
+    phase: str = "template"  # "template", or an event plan's phase: "base", "build", "peak", "taper"
+    slots: list[SessionSlot] = Field(default_factory=list)
+    load_target: float | None = None  # planned weekly load; event plans set it
+    notes: list[str] = Field(default_factory=list)

@@ -1,9 +1,11 @@
-# Athlete profile (placeholder; filled in later).
-# weekly_template:
-#   run: 1        # 10k
-#   bike: 2       # short + long
-#   gym: 3
-#   rest: 1
-# hr_zones: []
-# devices:
-#   - sigma_rox_4   # bike rides without HR
+# Athlete profile. The planner reads this on every run; edit freely.
+
+max_hr: 195   # beats per minute, used for heart-rate zones. Replace with your tested value if you have one.
+
+# The default weekly plan, used whenever no event plan is active.
+weekly_template:
+  - {sport: run,  kind: "10k",    count: 1}
+  - {sport: bike, kind: short,    count: 1}
+  - {sport: bike, kind: long,     count: 1}
+  - {sport: gym,  kind: strength, count: 3}
+  - {sport: rest, kind: rest,     count: 1}

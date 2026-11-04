@@ -17,3 +17,9 @@ def load_section(name: str, defaults: dict, path: str | Path = RULES_PATH) -> di
     if p.exists():
         cfg = yaml.safe_load(p.read_text()) or {}
     return {**defaults, **(cfg.get(name) or {})}
+
+
+def load_athlete(path: str | Path = ROOT / "config" / "athlete.yaml") -> dict:
+    """The athlete profile (max heart rate, weekly template, ...); empty dict if the file is missing."""
+    p = Path(path)
+    return (yaml.safe_load(p.read_text()) or {}) if p.exists() else {}

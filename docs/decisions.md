@@ -53,3 +53,6 @@ Garmin load is the planner's effort scale. Strava Relative Effort is converted w
 
 ## D017 (2026-11-04): Weekly load compared with an 8-week average
 The weekly load limit compares the last 7 days with the average week over the 8 weeks before (fewer while history is short). Four weeks was too jumpy for lumpy training (it kept the limit on for days). Chosen by the athlete after the first real-data run; all rule thresholds are expected to be tuned after the first trial period.
+
+## D018 (2026-11-04): Keep sports and plans open to extension
+The weekly template is configuration only (`config/athlete.yaml`). A week plan source (template today, event plan later) answers "what should this week contain", so an event overrides the template without editing core code. Adding a sport such as swimming is a documented checklist (`docs/extending.md`); not done yet by choice.

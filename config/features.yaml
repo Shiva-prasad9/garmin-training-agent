@@ -25,6 +25,16 @@ planner_rules:
     enabled: true
     module: training_agent.planner.rules.weekly_load_limit
 
+# What should each week contain? Sources are tried in the order listed; the first with a plan wins,
+# so an event plan (marathon, cycling, triathlon) placed above the template overrides it.
+week_plans:
+  event_plan:
+    enabled: false
+    module: training_agent.planner.week_plans.event_plan
+  fixed_template:
+    enabled: true
+    module: training_agent.planner.week_plans.fixed_template
+
 planner:
   llm_agent:
     enabled: false
