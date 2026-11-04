@@ -36,6 +36,9 @@ week_plans:
     module: training_agent.planner.week_plans.fixed_template
 
 planner:
+  rules_planner:
+    enabled: true
+    module: training_agent.planner.rules_planner
   llm_agent:
     enabled: false
     module: training_agent.planner.llm_agent

@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from datetime import date
 
-from training_agent.core.models import Activity, DailyMetrics, PlanContext, PlannedSession, RuleVerdict, WeekTargets
+from training_agent.core.models import PlanContext, DayPlan, Intensity, PlannedSession, RuleVerdict, WeekTargets
 from training_agent.core.plugin import Plugin
 
 
@@ -11,7 +11,11 @@ class PlannerRule(Plugin):
     """A deterministic guardrail (plugin files live in planner/rules/).
 
     Rules only restrict: a verdict is the highest intensity the rule allows, with reasons.
+    A rule that needs the day's own morning readings (sleep, HRV, ...) sets `uses_daily_readings`
+    so it is skipped when previewing a day whose readings do not exist yet.
     """
+
+    uses_daily_readings: bool = False
 
     @abstractmethod
     def evaluate(self, ctx: PlanContext) -> RuleVerdict:
@@ -32,17 +36,12 @@ class WeekPlanSource(Plugin):
 
 
 class Planner(Plugin):
-    """Produces the PlannedSession for a day.
-
-    Combines the minimum over all enabled PlannerRule limits with an LLM
-    agent that chooses and explains the session within those limits.
-    """
+    """Turns a PlanContext into a DayPlan: caps from the rules, the week's template, and options to choose from."""
 
     @abstractmethod
-    def plan_day(
-        self,
-        day: date,
-        metrics: list[DailyMetrics],
-        history: list[Activity],
-    ) -> PlannedSession:
-        """Return the session for `day`, never exceeding rule limits."""
+    def plan_day(self, ctx: PlanContext) -> DayPlan:
+        """Return the recommendation and all options for ctx.day."""
+
+    @abstractmethod
+    def to_session(self, plan: DayPlan, intensity: Intensity) -> PlannedSession:
+        """Turn the chosen option into a PlannedSession (records whether it overrides the recommendation)."""

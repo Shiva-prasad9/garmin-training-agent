@@ -214,3 +214,22 @@ class WeekTargets(BaseModel):
     slots: list[SessionSlot] = Field(default_factory=list)
     load_target: float | None = None  # planned weekly load; event plans set it
     notes: list[str] = Field(default_factory=list)
+
+
+class DayPlan(BaseModel):
+    """The planner's answer for one day: a recommendation plus every option the athlete may choose.
+
+    cap: the highest intensity all rules allow. recommended: what the planner suggests (never above cap).
+    options: one per intensity (rest, easy, moderate, hard); any of them can be chosen.
+    """
+
+    day: date
+    cap: Intensity
+    recommended: Intensity
+    verdicts: list[RuleVerdict] = Field(default_factory=list)
+    options: list[SessionOption] = Field(default_factory=list)
+    week_source: str = ""
+    week_phase: str = ""
+    remaining_slots: list[SessionSlot] = Field(default_factory=list)
+    done_this_week: list[str] = Field(default_factory=list)
+    summary: str = ""

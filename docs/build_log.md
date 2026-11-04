@@ -108,3 +108,11 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Real-data targets: easy run about 7:00/km at HR 134-140, moderate 6:25 at 149-160; easy ride about 21 km/h at HR 136-144, moderate 25 km/h, hard 26 km/h; hard run has only 1 session so uses defaults.
 - 75 tests pass.
 - Sports and plans kept open (D018): weekly template is config only; adding swimming is the checklist in `docs/extending.md`; prescriptions no longer hard-code the sport list.
+
+### Step 18: The rules planner (2026-11-04)
+- `planner/rules_planner.py` (plugin `rules_planner`): combines the caps of all enabled rules, the active week plan source's open slots (`week_progress`: recorded workouts use up matching slots, days without a workout use up rest slots), and session targets into a `DayPlan` with a recommendation and one option per intensity (rest, easy, moderate, hard).
+- Recommendation: never above the cap; REST if the cap is rest, or tired (cap easy or lower) with a free day left, or the week is complete; HARD only as a key session when there was no hard session in 5 days and the best open slot suits it; otherwise moderate (or the cap).
+- Every option can be chosen. Risk: recommended / ok / caution (one level above the cap) / not_advised (two or more). `to_session` records `overridden` when the choice is above the cap, with the recommendation, flags and warnings.
+- Each option previews tomorrow (alternation and weekly rules re-run with the planned session; rules that need tomorrow's own readings are skipped). Sessions are shortened (x0.85) the day after a hard one.
+- Slot choice: kind-vs-intensity suitability (long ride = easy/moderate, short ride and 10k = hard key sessions, strength = easy/moderate), avoids the same endurance sport two days running, offers an "extra session" when the week's template is complete.
+- 86 tests pass (new `test_rules_planner.py`). Real data, Wed 4 Nov: allowed easy (sleep score unusually low, resting HR trending up), recommended easy short ride; moderate is "caution", hard is "not advised" with tomorrow capped at easy.

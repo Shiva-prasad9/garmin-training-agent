@@ -24,6 +24,7 @@ def _fmt(v: float | None) -> str:
 
 class ReadinessGate(PlannerRule):
     name = "readiness_gate"
+    uses_daily_readings = True
 
     def __init__(self, params: dict | None = None):
         self.p = {**load_section(self.name, DEFAULTS), **(params or {})}

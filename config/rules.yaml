@@ -28,3 +28,9 @@ weekly_load_limit:
   min_chronic_load: 150    # below this average week the ratio is too noisy to use
   lookback_days: 90
   min_history_days: 28
+
+planner:
+  key_session_gap_days: 5      # recommend a hard key session when there was none in this many days (and you recover well)
+  fatigue_volume_factor: 0.85  # shorten the session the day after a hard one
+  long_ride_minutes: 150       # a ride this long uses up the week's "long" slot
+  load_factor: {easy: 0.7, moderate: 1.0, hard: 1.4}   # effort per minute, used only to preview tomorrow
