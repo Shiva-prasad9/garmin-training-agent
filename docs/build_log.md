@@ -48,7 +48,7 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Bug: `body_battery_morning` used the first reading of the day (a midnight value). Raw readings are sparse `[timestamp_ms, level]` pairs; the wake-up value is the peak up to 1 h after sleep end. Fixed in `parse_metrics`, test added. Re-run backfill (cached raw files, no extra API load) to correct stored rows.
 
 ### Step 9: Personal baselines and data-quality flags (2026-11-01)
-- Charts reviewed: data good; found short nights (~0.6 h, ~1.8 h) and an HRV spike (~106 ms) from partial recordings, and a slow HRV decline since early October.
+- Charts reviewed: data good; found a few very short nights and an HRV spike from partial recordings, and a slow HRV decline.
 - New contract models `SignalAssessment`, `DailyAssessment` in `core/models.py`.
 - `planner/baselines.py`: baseline = median of the previous 28 valid days, spread = scaled MAD (robust), z-score per signal. Flags: missing_sleep, short_sleep (<3 h), missing_hrv, hrv_outlier (|z|>4), insufficient_baseline. Short nights are excluded from sleep/HRV baselines. Thresholds in `config/rules.yaml`.
 - Tests: `tests/test_baselines.py` (6 tests, synthetic series). Notebook sections 8-9 added.
@@ -70,11 +70,11 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Goal: catch slow changes a single day's z-score misses (e.g. HRV drifting down while each night looks normal).
 - `SignalAssessment` gains `trend` (up/down/steady/None), `trend_mean`, `trend_z`, `trend_n`. Method: plain average of the last 7 valid days vs the 28-day baseline, scaled by spread/sqrt(days used); steady if |z| < 1.5; needs 4+ valid days. Short nights excluded. Parameters in `config/rules.yaml`.
 - Dashboard status cards show the trend as improving/declining/steady (direction judged per signal: higher HRV is good, lower resting HR is good).
-- 5 new tests (21 total). On real data at 2026-11-01: resting HR up (+1.7), Body Battery down (-1.6), HRV borderline (-1.5), sleep steady.
+- 5 new tests (21 total). On real data the trend showed resting HR up, Body Battery down and HRV borderline, with sleep steady.
 - Commit message convention: no Co-Authored-By lines (owner preference).
 
 ### Step 13: Strava export import (2026-11-04)
-- Probed the export (names and counts only): 260 workouts 2020-07 to 2026-11 (95 rides, 78 runs, 30 swims, 26 weight training, 18 hikes, 13 walks). Units: distance in metres (second `Distance` column), time in seconds. 26 of 27 Strava workouts in Garmin's period match a Garmin workout (start within 3 min).
+- Probed the export (names and counts only): several years of workouts across rides, runs, swims, weight training, hikes and walks. Units: distance in metres (second `Distance` column), time in seconds. Nearly all Strava workouts in Garmin's period match a Garmin workout (start within 3 min).
 - Heart rate on only 21 of 95 rides; Strava estimates power for rides without a meter. Relative Effort on 151 workouts, Perceived Exertion on 30.
 - `Activity` gains optional `relative_effort`, `perceived_exertion`, `avg_power_w`, `elevation_gain_m`. `activities` table migrates automatically (columns added, data untouched).
 - `collectors/strava_export.py` (plugin, read-only, uses Moving Time; hike with a 128-day elapsed time avoided). `scripts/import_strava.py` runs the one-time import.
@@ -83,7 +83,7 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 
 ### Step 14: Calibrating Strava effort to Garmin load (2026-11-04)
 - 26 Garmin workouts match a Strava workout; 21 have both Garmin load and Strava Relative Effort (RE). Correlation 0.93.
-- Ratio Garmin load / RE ranges 0.66-3.1 (RE grows faster than Garmin load for very hard efforts, e.g. the 21 km runs). A single multiplier, **load = 1.42 x RE**, has ~20% median error; a power-law fit was worse (29%), so the simple multiplier is used.
+- Ratio Garmin load / RE varies widely (RE grows faster than Garmin load for very hard efforts). A single multiplier, **load = 1.42 x RE**, has ~20% median error; a power-law fit was worse, so the simple multiplier is used.
 - Rides without HR: Garmin load is ~0.1-0.5 (effectively nothing). All 4 are in Strava with a perceived exertion and estimated watts. Estimated watts do not track HR-based effort (correlation -0.37 on rides) so they are not used. Perceived exertion has only 2 rides that also have HR effort, so it cannot be calibrated yet.
 - Decision: effort for no-HR rides = duration x typical load per minute of the athlete's HR rides (about 1.3-1.9/min for rides; runs about 2.5/min), with perceived exertion as a rough +/-30% adjustment when present; marked low confidence.
 - To be implemented in planner step 2 (own load estimate). Going forward, logging a perceived effort per workout would let this be calibrated properly.
@@ -98,14 +98,14 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - `planner/load.py`: effort in the D016 order, per-sport load rate, hard threshold (top quarter of the athlete's 90 days) and `is_hard` (zones 4-5 share or top-quarter effort; gym never hard).
 - Rule plugins (thresholds in `config/rules.yaml`, enabled in `features.yaml`): `readiness_gate`, `hard_easy_alternation`, `weekly_load_limit`. `PlannerRule` now has one method, `evaluate(ctx) -> RuleVerdict`.
 - Tests: 55 passing (new `test_load.py`, `test_rules.py`).
-- Real-data run (Oct 31 - Nov 4): Oct 31 easy (HRV trending worse, resting HR high), Nov 1 easy (sleep score unusually low, Body Battery low, resting HR high, yesterday's hard ride, weekly load 168% of average), Nov 2-3 readiness normal but weekly load limit easy (182%), Nov 4 easy (sleep score unusually low, RHR trend, load 236%).
+- Real-data run on the owner's last days: the planner recommended easy days with plausible reasons (poor sleep score, resting HR trend, hard day before, high weekly load vs. average).
 - Observation for tuning: the athlete's weeks are very lumpy, so the average week load is small and the weekly limit stays on for days.
-- Weekly load limit changed to an 8-week average (D017): on real data the last days now read 101-120% of the average week instead of 170-240%. Nov 2-3 allow hard; Nov 4 is easy from the readiness gate (sleep score). 56 tests pass. All thresholds to be tuned after the first trial.
+- Weekly load limit changed to an 8-week average (D017): on real data the last days now read about 100-120% of the average week instead of 170-240%. 56 tests pass. All thresholds to be tuned after the first trial.
 
 ### Step 17: Week-plan seam and session targets (2026-11-04)
 - Idea from the user: a target event (marathon, cycling, triathlon) must be able to override the weekly template. Built the seam: `SessionSlot` / `WeekTargets` models, `WeekPlanSource` plugin base, `planner/week_plan.py` (`targets_for_week`: first enabled source with a plan wins), `week_plans/fixed_template.py` (reads `weekly_template` from `config/athlete.yaml`), and a `week_plans` section in `features.yaml` (`event_plan` listed first, disabled, to be written later). An event plan will also need an `Event` model, a swim sport for triathlon, and a way to tell the weekly load rule that a ramp is intended.
 - `planner/prescriptions.py` (step 6): easy/moderate/hard buckets by avg HR share of max HR (<75%, 75-85%, >85%; max HR 195 in athlete.yaml) or by the 1-10 rating when no HR; targets are medians/quantiles of matching sessions in the last 180 days (long = 75th percentile duration, short = 25th, "10k" fixes distance); defaults when fewer than 3 sessions; harder sessions capped at 80% / 60% of the easy duration; HR range at least 6 bpm wide; volume_factor for fatigue.
-- Real-data targets: easy run about 7:00/km at HR 134-140, moderate 6:25 at 149-160; easy ride about 21 km/h at HR 136-144, moderate 25 km/h, hard 26 km/h; hard run has only 1 session so uses defaults.
+- Real-data targets looked sensible (easy run slower and lower heart rate than moderate; rides likewise); sports with few sessions use defaults.
 - 75 tests pass.
 - Sports and plans kept open (D018): weekly template is config only; adding swimming is the checklist in `docs/extending.md`; prescriptions no longer hard-code the sport list.
 

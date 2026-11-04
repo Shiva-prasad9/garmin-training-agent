@@ -47,6 +47,21 @@ cp .env.example .env   # then fill in your keys
 Other scripts: `scripts/backfill.py --days 90` (longer Garmin history), `scripts/import_strava.py` (one-time Strava archive).
 Tests: `PYTHONPATH=src .venv/bin/python -m pytest -q` (includes the golden days in `tests/golden/`).
 
+## For a reviewer: try it on your own Garmin data
+
+Everything personal is learned from the data of whoever runs it, so nothing is preset.
+
+1. Create a Garmin Personal API key (Garmin Connect developer program).
+2. Run the setup (from the project folder, after the Setup steps above, but skip `cp .env.example .env`):
+   ```bash
+   .venv/bin/python scripts/setup.py
+   ```
+   It asks for your key (hidden), your max heart rate, loads 90 days of your history and prints today's plan.
+3. Daily after that: `.venv/bin/python main.py`, and `.venv/bin/python scripts/serve.py` for the dashboard.
+
+Your key and data stay on your machine (`.env` and `data/` are git-ignored). Optionally edit `config/athlete.yaml`
+(weekly template, ride duration bands). Strava is optional and not needed.
+
 ## Workflow
 
 Work on `feature/*` branches; `main` must always run. Golden-day tests in `tests/golden/` run before every merge.
