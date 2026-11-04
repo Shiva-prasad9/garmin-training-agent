@@ -33,6 +33,22 @@ def _targets(p: Prescription | None) -> str:
     return ", ".join(parts)
 
 
+def _recovery_line(brief: DailyBrief) -> str:
+    m = brief.metrics
+    if m is None:
+        return "Recovery today: no readings yet."
+    parts = []
+    if m.sleep_hours is not None:
+        parts.append(f"sleep {m.sleep_hours:.1f} h" + (f" (score {m.sleep_score})" if m.sleep_score is not None else ""))
+    if m.hrv_last_night_ms is not None:
+        parts.append(f"HRV {m.hrv_last_night_ms} ms" + (f" ({m.hrv_status.lower()})" if m.hrv_status else ""))
+    if m.resting_hr is not None:
+        parts.append(f"resting HR {m.resting_hr}")
+    if m.body_battery_morning is not None:
+        parts.append(f"Body Battery {m.body_battery_morning} at wake-up")
+    return "Recovery today: " + (", ".join(parts) or "no readings yet.")
+
+
 def format_brief(brief: DailyBrief) -> str:
     plan = brief.plan
     rec = next(o for o in plan.options if o.intensity == plan.recommended)
@@ -40,6 +56,7 @@ def format_brief(brief: DailyBrief) -> str:
     lines += [f"! {note}" for note in brief.notes]
     if brief.notes:
         lines.append("")
+    lines.append(_recovery_line(brief))
     lines.append(f"Allowed today: up to {plan.cap.value.upper()}")
     lines += [f"  - {r}" for v in plan.verdicts if v.max_intensity.value != "hard" for r in v.reasons] or ["  - Recovery signals look normal for you."]
     lines += ["", f"RECOMMENDED: {rec.title}"]

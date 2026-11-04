@@ -21,17 +21,18 @@ class Plugin(ABC):
     name: str
 
 
-def load_enabled_plugins(config_path: str | Path, section: str) -> list[Plugin]:
+def load_enabled_plugins(config_path: str | Path, section: str, require: str | None = None) -> list[Plugin]:
     """Instantiate every enabled plugin of one features.yaml section.
 
     For each entry with `enabled: true`, import its `module` and instantiate
-    the single concrete Plugin subclass defined in that module.
+    the single concrete Plugin subclass defined in that module. If `require` is given, entries that set
+    that key to false are skipped (for example `daily_run: false` keeps a plugin out of the daily run).
     """
     with open(config_path) as f:
         config = yaml.safe_load(f) or {}
     plugins: list[Plugin] = []
     for name, spec in (config.get(section) or {}).items():
-        if not spec.get("enabled"):
+        if not spec.get("enabled") or (require and spec.get(require) is False):
             continue
         module = importlib.import_module(spec["module"])
         classes = [

@@ -119,7 +119,8 @@ def test_brief_text_has_the_essentials(tmp_path):
     repo = stocked_repo(tmp_path, TODAY - timedelta(days=1))
     brief = run_daily(day=TODAY, collect=False, collectors=[], repo=repo, planner=planner(), outputs=[])
     text = format_brief(brief)
-    for part in ("TRAINING BRIEF", "Wednesday 11 February 2026", "Allowed today", "RECOMMENDED:", "Your options",
+    for part in ("TRAINING BRIEF", "Wednesday 11 February 2026", "Recovery today: no readings yet",
+                 "Allowed today", "RECOMMENDED:", "Your options",
                  "This week", "[rest", "[hard", "1 day old"):
         assert part in text, part
 
@@ -130,3 +131,13 @@ def test_the_real_config_loads_every_stage():
     names = {s: sorted(p.name for p in load_enabled_plugins(CONFIG, s)) for s in ("collectors", "storage", "planner", "outputs")}
     assert names == {"collectors": ["garmin_personal_api", "strava_export"], "storage": ["sqlite"],
                      "planner": ["rules_planner"], "outputs": ["console_brief"]}
+    # the Strava archive is a one-time import, so the daily run leaves it out
+    daily = [p.name for p in load_enabled_plugins(CONFIG, "collectors", require="daily_run")]
+    assert daily == ["garmin_personal_api"]
+
+
+def test_brief_shows_todays_recovery_numbers(tmp_path):
+    brief = run_daily(day=TODAY, collect=False, collectors=[], repo=stocked_repo(tmp_path), planner=planner(), outputs=[])
+    text = format_brief(brief)
+    assert "Recovery today: sleep 7.0 h (score 80), HRV" in text
+    assert "resting HR 48, Body Battery 80 at wake-up" in text

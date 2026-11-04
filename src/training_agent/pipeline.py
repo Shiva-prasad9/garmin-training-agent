@@ -35,7 +35,7 @@ def run_daily(day: date | None = None, days: int = 3, collect: bool = True, conf
     config_path = Path(config_path)
     repo = repo or _first(load_enabled_plugins(config_path, "storage"), "storage")
     planner = planner or _first(load_enabled_plugins(config_path, "planner"), "planner")
-    collectors = collectors if collectors is not None else load_enabled_plugins(config_path, "collectors")
+    collectors = collectors if collectors is not None else load_enabled_plugins(config_path, "collectors", require="daily_run")
     outputs = outputs if outputs is not None else load_enabled_plugins(config_path, "outputs")
     notes: list[str] = []
 

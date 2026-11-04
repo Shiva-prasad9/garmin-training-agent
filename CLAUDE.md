@@ -8,6 +8,7 @@
 6. Golden-day tests (`tests/golden/`) must pass before every merge. Work on `feature/*` branches; `main` must always run.
 7. Do not recompute Garmin metrics. The planner adds a judgment layer on top of them.
 8. Commit messages and PR descriptions carry no Co-Authored-By or "Generated with Claude" lines (owner's preference).
+9. Before any commit or push, check file CONTENTS for secrets, not just file names (`tests/test_repo_hygiene.py` does this). Never print a matched secret; mask it.
 
 ## Layout
 

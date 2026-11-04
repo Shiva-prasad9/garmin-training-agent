@@ -145,3 +145,7 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - `outputs/console_brief.py`: `format_brief` plain-text brief (allowed level and why, recommendation with targets and tomorrow preview, all options with risk, this week). Email and calendar outputs will reuse it.
 - `main.py`: `--days N`, `--day YYYY-MM-DD`, `--no-collect`; logs to console and `logs/daily_run.log`.
 - 122 tests pass (new `test_pipeline.py`). Offline run on real data produces the same recommendation as the dashboard. README and roadmap updated: phases 1-4 done.
+
+### Step 24: Small fixes, and a leaked key found before going public (2026-11-04)
+- The Strava archive no longer runs in the daily run (`daily_run: false` in `features.yaml`, honoured by `load_enabled_plugins(..., require="daily_run")`); the brief now starts with a "Recovery today" line (sleep, HRV, resting HR, Body Battery).
+- Audit before making the repo public: the live Garmin API key was in the tracked `.env.example` (in every commit from the Strava/collector commit on, and pushed). Cause: the key was saved into the example file; earlier checks looked at file names only. Fixed in the working tree (names only). Added `tests/test_repo_hygiene.py` (scans tracked file contents for key patterns, requires `.env.example` to hold names only, forbids private or generated files) and rule 9 in `CLAUDE.md`. The key must be revoked and replaced; history still contains it until rewritten or the repository is recreated.
