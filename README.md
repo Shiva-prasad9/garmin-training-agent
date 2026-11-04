@@ -36,7 +36,16 @@ export PYTHONPATH=src
 cp .env.example .env   # then fill in your keys
 ```
 
-Single daily entry point (stub for now): `python main.py`.
+### Daily use
+
+```bash
+.venv/bin/python main.py                # refresh the last 3 days from Garmin, plan today, print the brief
+.venv/bin/python main.py --no-collect   # plan from stored data only (no network)
+.venv/bin/python scripts/serve.py       # the dashboard at http://127.0.0.1:8000 (choose a session, log gym)
+```
+
+Other scripts: `scripts/backfill.py --days 90` (longer Garmin history), `scripts/import_strava.py` (one-time Strava archive).
+Tests: `PYTHONPATH=src .venv/bin/python -m pytest -q` (includes the golden days in `tests/golden/`).
 
 ## Workflow
 

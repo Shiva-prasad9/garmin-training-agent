@@ -44,6 +44,9 @@ planner:
     module: training_agent.planner.llm_agent
 
 outputs:
+  console_brief:
+    enabled: true
+    module: training_agent.outputs.console_brief
   google_calendar:
     enabled: false
     module: training_agent.outputs.google_calendar

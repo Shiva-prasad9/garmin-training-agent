@@ -138,3 +138,10 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 ### Step 22: Review of the new dashboard panels (2026-11-04)
 - The athlete tried the dashboard: choosing, the week panel and the gym log all worked (a gym entry showed in This week and Activities).
 - Fixes from the screenshots: swimming is now its own sport (`Sport.SWIM`; Garmin "lap swimming" and Strava "Swim" map to it; stored rows relabelled on startup; yellow `--s-swim`, validated light and dark); the 7-day trend badge on the status card sits on its own line without a stray space; the quest headline no longer repeats the recommendation. `docs/extending.md` updated. 113 tests pass.
+
+### Step 23: The daily run (2026-11-04)
+- `DailyBrief` (core contract) now carries the planner's `DayPlan`, the day's metrics, the newest data date and notes.
+- `pipeline.run_daily` (collect -> store -> plan -> publish; all stages from `features.yaml`, plugins injectable for tests). A source that fails does not stop the run: the brief is made from stored data and says so. Stale data is reported ("newest recovery data is N days old"). A broken output does not stop the others. Empty database gives a clear error.
+- `outputs/console_brief.py`: `format_brief` plain-text brief (allowed level and why, recommendation with targets and tomorrow preview, all options with risk, this week). Email and calendar outputs will reuse it.
+- `main.py`: `--days N`, `--day YYYY-MM-DD`, `--no-collect`; logs to console and `logs/daily_run.log`.
+- 122 tests pass (new `test_pipeline.py`). Offline run on real data produces the same recommendation as the dashboard. README and roadmap updated: phases 1-4 done.

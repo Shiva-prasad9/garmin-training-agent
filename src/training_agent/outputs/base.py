@@ -1,4 +1,4 @@
-"""Output stage base class. STUB ONLY."""
+"""Output stage base class."""
 
 from abc import abstractmethod
 

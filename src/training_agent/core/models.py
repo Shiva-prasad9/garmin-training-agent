@@ -123,14 +123,6 @@ class PlannedSession(BaseModel):
     warnings: list[str] = Field(default_factory=list)
 
 
-class DailyBrief(BaseModel):
-    """What the outputs stage publishes for one day."""
-
-    date: date
-    session: PlannedSession
-    readiness: Readiness
-    metrics: DailyMetrics | None = None
-    upcoming: list[PlannedSession] = Field(default_factory=list)
 
 
 # ---------- planner contracts ----------
@@ -236,3 +228,16 @@ class DayPlan(BaseModel):
     dropped_slots: list[SessionSlot] = Field(default_factory=list)  # sessions dropped because the week ran out of days
     done_this_week: list[str] = Field(default_factory=list)
     summary: str = ""
+
+
+class DailyBrief(BaseModel):
+    """What the outputs stage publishes for one day: the planner's DayPlan plus how fresh the data is.
+
+    notes: things the reader should know (stale data, a source that could not be refreshed).
+    """
+
+    date: date
+    plan: DayPlan
+    metrics: DailyMetrics | None = None  # the day's own recovery numbers, if the watch has synced them
+    latest_data: date | None = None  # newest day with recovery data
+    notes: list[str] = Field(default_factory=list)
