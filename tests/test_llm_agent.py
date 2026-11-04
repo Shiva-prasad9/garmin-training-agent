@@ -85,3 +85,41 @@ def test_prompt_is_compact_facts_only():
     assert {"cap", "options", "rule_verdicts", "workouts_last_7_days"} <= set(facts)
     assert facts["workouts_last_7_days"][0]["sport"] == "bike"
     assert "@" not in json.dumps(facts)
+
+
+# ---------- plug-and-play providers ----------
+import pytest
+from training_agent.planner.llm_client import ManualClient, NullClient, NoReply, make_client
+
+
+def manual_agent(tmp_path):
+    return LlmAgent(client=ManualClient(tmp_path / "llm"), rules=RulesPlanner(sources=[FixedTemplate()]), cache_dir=tmp_path / "c")
+
+
+def test_manual_mode_writes_prompt_and_stays_rules_only_until_a_reply_exists(tmp_path):
+    plan = manual_agent(tmp_path).plan_day(ctx())
+    assert plan.decided_by == "rules"
+    text = (tmp_path / "llm" / f"prompt_{DAY}.md").read_text()
+    assert "Facts for today" in text and "ONLY a JSON object" in text
+
+
+def test_manual_reply_is_used_even_with_chatter_and_still_checked(tmp_path):
+    a = manual_agent(tmp_path)
+    base = a.rules.plan_day(ctx())
+    a.plan_day(ctx())
+    choice = "rest" if base.recommended != Intensity.REST else "easy"
+    (tmp_path / "llm" / f"reply_{DAY}.json").write_text(f'Sure!\n```json\n{{"intensity": "{choice}", "coach_note": "Pasted."}}\n```')
+    plan = a.plan_day(ctx())
+    assert plan.decided_by == "llm" and plan.coach_note == "Pasted."
+    (tmp_path / "llm" / f"reply_{DAY}.json").write_text('{"intensity": "hard", "coach_note": "x"}')
+    capped = a.plan_day(ctx())
+    assert capped.recommended in (Intensity.EASY, Intensity.REST, Intensity.MODERATE, Intensity.HARD)
+    assert capped.cap == base.cap
+
+
+def test_provider_switch_by_config():
+    assert isinstance(make_client({"provider": "manual"}), ManualClient)
+    assert isinstance(make_client({"provider": "none"}), NullClient)
+    assert make_client({"provider": "anthropic"}).__class__.__name__ == "AnthropicClient"
+    with pytest.raises(ValueError):
+        make_client({"provider": "typo"})

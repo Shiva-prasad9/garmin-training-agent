@@ -1,5 +1,9 @@
-# Settings for the language-model layer (planner/llm_agent.py).
-# It needs ANTHROPIC_API_KEY in .env. Without a key, or if the call fails, the plan stays rules-only.
+# Settings for the language-model layer (planner/llm_agent.py). See docs/llm.md.
+# provider: manual     (default, no key: the run writes a prompt file, you paste a reply file back)
+#           anthropic  (needs ANTHROPIC_API_KEY in .env)
+#           none       (rules only)
+# Whatever happens, the plan stays rules-only if the model is unavailable or answers outside the rules.
+provider: manual
 model: claude-haiku-5-5
 max_tokens: 400
 timeout_s: 30

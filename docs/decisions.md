@@ -62,3 +62,6 @@ Every option the planner offers can be chosen; labels and warnings inform but ne
 
 ## D020 (2026-11-04): The LLM chooses within the rules, never above them
 The rules planner sets the cap and builds every option. The language model may only pick an intensity at or below the cap and explain it; code enforces this, and any failure returns the rules plan. This keeps the safety behaviour deterministic and testable while the model adds judgment and plain-language reasons.
+
+## D021 (2026-11-04): Thunder theme (dark, gold and orange), card layout
+The Solo Leveling look felt bland and a cream comic look was rejected. The dashboard now uses a dark card layout with Zenitsu-inspired gold and orange accents (and a pale mint light mode), a side menu, key-number cards with trends, and a readiness gauge. Sport colours stay distinct (blue, orange, green, gold, purple) and status colours always come with an icon and a word. Colours are tokens at the top of `style.css`, so the palette can change without touching the panels.

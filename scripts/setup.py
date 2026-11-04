@@ -3,7 +3,7 @@
     .venv/bin/python scripts/setup.py
 
 Asks for your Garmin Personal API key (typing is hidden) and saves it to .env, which git ignores.
-Then loads 90 days of your Garmin history and prints today's plan. Safe to re-run.
+Then loads 6 months of your Garmin history and prints today's plan. Safe to re-run.
 Your numbers (baselines, typical sessions) are learned from your own data; nothing is preset.
 """
 import getpass
@@ -52,8 +52,8 @@ def main() -> int:
         set_max_hr(int(answer))
         print(f"max_hr set to {answer}.")
 
-    print("\nLoading 90 days of Garmin history (a minute or two)...")
-    if subprocess.call([PY, str(ROOT / "scripts" / "backfill.py"), "--days", "90"]) != 0:
+    print("\nLoading 6 months of Garmin history with workout details (this can take several minutes)...")
+    if subprocess.call([PY, str(ROOT / "scripts" / "backfill.py"), "--days", "180", "--details"]) != 0:
         print("History load failed. Check the key and try again.")
         return 1
     print("\nToday's plan:\n")

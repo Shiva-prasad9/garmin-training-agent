@@ -19,7 +19,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from training_agent.collectors.base import Collector
-from training_agent.core.models import Activity, DailyMetrics, Sport
+from training_agent.core.models import Activity, ActivityDetail, DailyMetrics, Sport
 
 HOST = "https://personal.connectapi.garmin.com"
 TOKEN_PATH = "/personalapitoken-service/personal-api/personal-api-key/token"
@@ -104,6 +104,52 @@ def parse_activity(a: dict) -> Activity:
         hr_zone_seconds=None if all(z is None for z in zones) else [z or 0.0 for z in zones],
         raw_ref=f"activities/{a['activityId']}",
     )
+
+
+# Series we keep from the per-sample metrics: our name -> (Garmin metric keys, first one present wins; multiplier).
+# Checked on real responses: values already arrive in metres, seconds and m/s (the "factor" in the unit
+# descriptors is not to be applied), so only the display units below are converted.
+DETAIL_SERIES = {
+    "distance_km": (("sumDistance",), 0.001),
+    "time_min": (("sumDuration",), 1 / 60),
+    "heart_rate": (("directHeartRate",), 1.0),
+    "speed_kmh": (("directSpeed",), 3.6),
+    "elevation_m": (("directElevation",), 1.0),
+    "cadence": (("directBikeCadence", "directDoubleCadence", "directRunCadence"), 1.0),
+    "power_w": (("directPower",), 1.0),
+}
+ROUTE_DECIMALS = 5  # about one metre
+
+
+def parse_activity_detail(activity_id: str, summary, details) -> ActivityDetail:
+    """Combine the activity summary and details responses into one ActivityDetail (either may be missing)."""
+    s = _dig(summary, "summaryDTO") or {}
+    detail = ActivityDetail(
+        activity_id=activity_id,
+        distance_m=s.get("distance"), duration_s=s.get("duration"), moving_s=s.get("movingDuration"),
+        elapsed_s=s.get("elapsedDuration"), avg_speed_ms=s.get("averageSpeed"),
+        avg_moving_speed_ms=s.get("averageMovingSpeed"), max_speed_ms=s.get("maxSpeed"),
+        elevation_gain_m=s.get("elevationGain"), elevation_loss_m=s.get("elevationLoss"),
+        max_elevation_m=s.get("maxElevation"), min_elevation_m=s.get("minElevation"),
+        avg_hr=s.get("averageHR"), max_hr=s.get("maxHR"), min_hr=s.get("minHR"),
+        calories=s.get("calories"), avg_temp_c=s.get("averageTemperature"),
+    )
+    if not isinstance(details, dict):
+        return detail
+    index = {m["key"]: m["metricsIndex"] for m in details.get("metricDescriptors") or []}
+    rows = [r.get("metrics") or [] for r in details.get("activityDetailMetrics") or []]
+    for name, (keys, scale) in DETAIL_SERIES.items():
+        key = next((k for k in keys if k in index), None)
+        if key is None:
+            continue
+        i = index[key]
+        values = [round(r[i] * scale, 3) if i < len(r) and r[i] is not None else None for r in rows]
+        if any(v for v in values) or name in ("distance_km", "time_min"):
+            detail.series[name] = values
+    points = _dig(details, "geoPolylineDTO", "polyline") or []
+    detail.route = [(round(p["lat"], ROUTE_DECIMALS), round(p["lon"], ROUTE_DECIMALS)) for p in points
+                    if p.get("lat") is not None and p.get("lon") is not None and p.get("valid") is not False]
+    return detail
 
 
 # ---------- collector plugin ----------
@@ -197,6 +243,18 @@ class GarminPersonalApi(Collector):
                 out.append(m)
             day += timedelta(days=1)
         return out
+
+    def collect_activity_detail(self, activity: Activity) -> ActivityDetail | None:
+        if activity.source != "garmin" or not activity.id.startswith("garmin:"):
+            return None
+        aid = activity.id.split(":", 1)[1]
+        settled = activity.start_time.date() < date.today() - timedelta(days=1)
+        summary = self._cached("activity_details", f"{aid}_summary", f"/activity-service/activity/{aid}", settled)
+        details = self._cached("activity_details", f"{aid}_details",
+                               f"/activity-service/activity/{aid}/details?maxChartSize=400&maxPolylineSize=400", settled)
+        if summary is None and details is None:
+            return None
+        return parse_activity_detail(activity.id, summary, details)
 
     def collect_activities(self, start: date, end: date) -> list[Activity]:
         out: list[Activity] = []

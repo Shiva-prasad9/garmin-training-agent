@@ -20,7 +20,7 @@ Pipeline: **collect → store → plan → publish**.
 1. `collectors/`: pull data (Garmin Personal API, Strava bulk export)
 2. `storage/`: persist to SQLite in `data/db/`
 3. `planner/`: deterministic rules (readiness-gated intensity, hard/easy alternation, weekly load limit) plus an LLM agent that explains its choice within those limits
-   (optional: put `ANTHROPIC_API_KEY` in `.env` to switch the LLM layer on; without it the plan is rules-only. Model in `config/llm.yaml`)
+   (the LLM layer is plug and play: manual copy-paste by default, or an API key, or off. See [docs/llm.md](docs/llm.md))
 4. `outputs/`: Google Calendar events and a daily email brief
 
 Stages communicate only through the data contracts in `src/training_agent/core/models.py`. Every feature is a plugin file implementing a stage's base class; `config/features.yaml` enables or disables plugins. A new feature is one new file plus one config line.
@@ -45,7 +45,7 @@ cp .env.example .env   # then fill in your keys
 .venv/bin/python scripts/serve.py       # the dashboard at http://127.0.0.1:8000 (choose a session, log gym)
 ```
 
-Other scripts: `scripts/backfill.py --days 90` (longer Garmin history), `scripts/import_strava.py` (one-time Strava archive).
+Other scripts: `scripts/backfill.py --days 180 --details` (longer Garmin history, plus routes and per-sample detail so workouts open on the dashboard), `scripts/import_strava.py` (one-time Strava archive).
 Tests: `PYTHONPATH=src .venv/bin/python -m pytest -q` (includes the golden days in `tests/golden/`).
 
 ## For a reviewer: try it on your own Garmin data
@@ -57,7 +57,7 @@ Everything personal is learned from the data of whoever runs it, so nothing is p
    ```bash
    .venv/bin/python scripts/setup.py
    ```
-   It asks for your key (hidden), your max heart rate, loads 90 days of your history and prints today's plan.
+   It asks for your key (hidden), your max heart rate, loads 6 months of your history (with workout routes) and prints today's plan.
 3. Daily after that: `.venv/bin/python main.py`, and `.venv/bin/python scripts/serve.py` for the dashboard.
 
 Your key and data stay on your machine (`.env` and `data/` are git-ignored). Optionally edit `config/athlete.yaml`
@@ -70,6 +70,7 @@ Work on `feature/*` branches; `main` must always run. Golden-day tests in `tests
 ## Docs
 
 - Project rules: [CLAUDE.md](CLAUDE.md)
+- LLM layer (anyone with a key or a model can plug one in): [docs/llm.md](docs/llm.md)
 - Vision: [docs/vision.md](docs/vision.md)
 - Decisions: [docs/decisions.md](docs/decisions.md)
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)

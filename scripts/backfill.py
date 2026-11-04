@@ -3,6 +3,7 @@
 Usage (from anywhere):
     .venv/bin/python scripts/backfill.py --days 14
     .venv/bin/python scripts/backfill.py --days 90
+    .venv/bin/python scripts/backfill.py --days 90 --details   # also routes and per-sample detail
 
 Plugins come from config/features.yaml, so this script never names them.
 Safe to re-run: stored rows are updated, raw files are only added.
@@ -17,11 +18,13 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from training_agent.core.plugin import load_enabled_plugins  # noqa: E402
+from training_agent.pipeline import fetch_missing_details  # noqa: E402
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=14)
+    parser.add_argument("--details", action="store_true", help="also download route and per-sample detail of each workout")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -42,6 +45,9 @@ def main() -> None:
         activities = c.collect_activities(start, end)
         print(f"  activities: {len(activities)}")
         repo.save_activities(activities)
+    if args.details:
+        added = fetch_missing_details(collectors, repo, repo.get_activities(start, end))
+        print(f"activity details downloaded: {added}")
     print("done")
 
 

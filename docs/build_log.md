@@ -156,3 +156,42 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Privacy: the model sees only a compact summary (rule reasons, the options, workouts of the last 7 days: sport, minutes, load). No raw files, no key, no name.
 - Plain `httpx` call with a forced tool (structured answer); no SDK needed. Model set in `config/llm.yaml`.
 - 7 new tests with a fake client (133 total). Real run without a key: falls back to the rules plan as designed.
+
+### Step 26: LLM providers are plug and play (2026-11-04)
+- `config/llm.yaml` gets `provider: manual | anthropic | none` (default manual, no key). `make_client` picks the client; a new client is one small class.
+- Manual mode: the run writes `data/llm/prompt_<date>.md`; a reply saved as `data/llm/reply_<date>.json` is used (checked against the cap like any answer). No reply means rules-only.
+- `docs/llm.md` documents all providers and the Anthropic setup. 136 tests pass.
+
+### Step 27: User guide and workout details (2026-11-04)
+- User guide: `panels/guide.js` (collapsed panel at the bottom, "Guide" link in the header). Plain-language help for every panel plus a short glossary.
+- Probed the Garmin per-activity endpoints (field names only). `/activity-service/activity/<id>` (summary) and `.../details` (per-sample series + GPS route) work; `.../splits` and `.../hrTimeInZones` return 404 (zones already come with the activity list). Checked that values arrive in metres, seconds and m/s, so the unit "factor" is not applied.
+- New `ActivityDetail` model, optional `Collector.collect_activity_detail`, `activity_details` table, `pipeline.fetch_missing_details` (run/bike/other only; one failure never stops the rest), `backfill.py --details`. Raw responses are cached under `data/raw/garmin/activity_details/` (git-ignored). The dashboard reads stored data only, it never calls Garmin.
+- Endpoint `/api/activities/<id>`; clicking a ride, run or hike opens a dialog: moving vs elapsed time, speed or pace, climbing, elevation range, heart rate and zones, calories, temperature, linked charts (heart rate, speed or pace, elevation, power, cadence along the distance) and the route drawn as a line with start/end markers and a scale bar. No map tiles, so the route never leaves the computer.
+- 5 new tests (141 total). The JavaScript could not be run in the build environment, so the dialog needs a first visual check in the browser.
+
+### Step 28: Side navigation and the Activities section (2026-11-04)
+- Left menu with Overview, Activities (drop-down: all, cycling, running, hiking and walking, swimming, strength, other, each with a count) and User guide. Hash routes (`#/overview`, `#/activities/bike`, `#/guide`) so the browser back button works. The 7/10/14 day buttons show on the overview only.
+- Activities view (`views/activities_view.js`, endpoint `/api/activity-log?kind=&days=`): choose 1, 3, 6 or 12 months; totals, hours per month (the existing stacked-bar chart, generalised for other periods and units) and the workouts grouped by month. Rows open the same detail window. A notice explains how to download older history when the stored history is shorter than the chosen period. Strava stays out.
+- The guide moved from the bottom of the overview to its own page; `setup.py` now loads 6 months with details.
+- History for the user: `scripts/backfill.py --days 180 --details`. 142 tests pass; the JavaScript still needs the first visual check in the browser.
+
+### Step 29: Thunder theme and new layout (2026-11-04)
+- The cream/red comic theme was rejected. Rebuilt from the user's references (dark card dashboards, and a Zenitsu image for colour): near-black rounded cards, gold and orange accents, his triangle (haori) pattern as a subtle motif, a pale mint light mode. Dark is the default; the toggle is in the side menu.
+- New layout: side menu with icons and a brand block, page title bar, four key-number cards with a trend line each (Body Battery, HRV, sleep score, resting heart rate), "Today's plan" with the four options in a 2x2 grid, a Readiness card (four-step gauge of the allowed level, why, and the coach note), trends, a week progress ring, activities and the gym log. All styling is in `style.css` (the separate `pop.css` was removed).
+- The workout window opens with a bounce and a lightning flash across a gold header with the triangle pattern, a black starburst badge with the distance, and tiles that pop in one by one.
+- Contrast checked with a script on both modes (text 4.5:1 or better; marks about 3.4:1 or better; light-mode level and accent colours were darkened for this). Status colours always carry an icon and a word.
+- The JavaScript could only be bracket-checked, not run, so the first browser look may need fixes.
+
+### Step 30: Browser review, insights and next best step (2026-11-04)
+- Reviewed the dashboard in a real browser (Playwright, installed in the venv as a dev tool; `scripts/screenshots.py` repeats it, dark, light and phone width, and reports console errors). The Node-based Playwright MCP could not be used (no Node.js here). Found and fixed: a long overview that repeated the same reasons in many places, an options area that dominated the page, jargon ("declining" for a rising resting heart rate), an "HP" leftover label, pace chart spikes from stops, a wrapping elevation tile, a stray white bar in the activity window with reduced motion, unreadable text in the light-mode hero box, and a very long month list.
+- New insight plugins (`planner/insights/`, enabled in `features.yaml`, one file each): sleep_debt, recovery_trend, rest_days, load_balance, intensity_mix, consistency, progression. Each turns the athlete's own data into a plain sentence, why it matters, what to do, and a priority. They are advisory (never limit the plan) and return nothing when data is thin. The weekly load maths moved to `planner/load.weekly_load_ratio`, shared by the rule and the insight.
+- Dashboard: a gold "Your next best step" card at the top (the highest-priority insight that needs attention), an Insights grid with Needs action / Keep an eye on it / On track and a "numbers behind it" drop-down, one plain-language meaning line under each Garmin metric, a compact Today's plan (recommended session in full, other choices in short rows), and months in the activity list that collapse (latest two open). The console brief also prints the next best step.
+- 150 tests pass (8 new, one per insight plus planner ordering and failure isolation).
+
+### Step 31: Calmer overview, Insights on its own page (2026-11-04)
+- Feedback: the overview was overcrowded with words. The next best step and the insight cards moved to a new "Insights" page, last in the left menu (under User guide). The overview is back to key numbers, today's plan, readiness, trends, week, activities and gym log, with fewer words: no metric explanations, shorter trend labels, details of other choices behind one "Details" link, no coach box unless there is a coach note, shorter legends and helper texts.
+
+### Step 32: Short overview, manual log under Activities (2026-11-04)
+- Overview cut from about 3,900 px tall to about 1,450 px: key numbers, then today's plan (recommended session in full, the other three as compact choice buttons), a small readiness gauge, a week ring, trends in a 2x2 block, and a short "Recent activity" list (5 workouts, "See all activities" link). The weekly-load chart, the long activity list and the gym log left the overview.
+- The gym log became a general manual log (`/api/manual`, replacing `/api/gym`): under Activities, "+ Log an activity by hand" with an Activity drop-down (strength, running, cycling, swimming, hiking, walking, other), date (up to 90 days back), minutes, optional distance and a 1-10 effort. Entries count toward the week and load, show up under the matching sport, and can be deleted from the same list.
+- 151 tests pass. Checked in a real browser (dark, light, phone): no console errors.

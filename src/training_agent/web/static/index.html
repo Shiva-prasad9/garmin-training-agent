@@ -7,25 +7,35 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <span class="brand-mark" aria-hidden="true">&#9670;</span>
-      <div>
-        <h1>Training System</h1>
-        <p id="subtitle" class="muted">Loading status window&hellip;</p>
+  <div class="app">
+    <aside id="side">
+      <div class="brand">
+        <svg class="bolt" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 2 4 13.5h6.2L9 22l10-12.2h-6.4z"/></svg>
+        <div><h1>Training System</h1><p>Thunder dashboard</p></div>
       </div>
-    </div>
-    <div class="controls">
-      <div class="seg" role="group" aria-label="Trend range" id="range">
-        <button data-days="7" aria-pressed="false">7 days</button>
-        <button data-days="10" aria-pressed="true">10 days</button>
-        <button data-days="14" aria-pressed="false">14 days</button>
+      <nav id="nav" aria-label="Sections"></nav>
+      <div class="side-foot">
+        <button id="theme" class="ghost" aria-label="Switch between dark and light theme">&#9680; Switch theme</button>
+        <p class="muted small">Your data stays on this computer.</p>
       </div>
-      <button id="theme" class="ghost" aria-label="Toggle light or dark theme">Theme</button>
+    </aside>
+    <div class="content">
+      <header class="top">
+        <div>
+          <h1 id="pageTitle">Dashboard</h1>
+          <p id="subtitle" class="muted">Loading&hellip;</p>
+        </div>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Trend range" id="range">
+            <button data-days="7" aria-pressed="false">7 days</button>
+            <button data-days="10" aria-pressed="true">10 days</button>
+            <button data-days="14" aria-pressed="false">14 days</button>
+          </div>
+        </div>
+      </header>
+      <main id="panels" aria-live="polite"></main>
     </div>
-  </header>
-  <main id="panels" aria-live="polite"></main>
-  <footer class="muted foot">Garmin data via the Personal API. Everything stays on this computer.</footer>
+  </div>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>

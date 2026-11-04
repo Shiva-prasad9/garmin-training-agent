@@ -57,6 +57,9 @@ def format_brief(brief: DailyBrief) -> str:
     if brief.notes:
         lines.append("")
     lines.append(_recovery_line(brief))
+    step = next((i for i in plan.insights if i.status != "good" and i.action), None) or next((i for i in plan.insights if i.action), None)
+    if step:
+        lines += [f"NEXT BEST STEP: {step.action}", f"  Because: {step.headline}"]
     lines.append(f"Allowed today: up to {plan.cap.value.upper()}")
     lines += [f"  - {r}" for v in plan.verdicts if v.max_intensity.value != "hard" for r in v.reasons] or ["  - Recovery signals look normal for you."]
     lines += ["", f"RECOMMENDED: {rec.title}"]

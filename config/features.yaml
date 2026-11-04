@@ -28,6 +28,29 @@ planner_rules:
 
 # What should each week contain? Sources are tried in the order listed; the first with a plan wins,
 # so an event plan (marathon, cycling, triathlon) placed above the template overrides it.
+insights:   # advisory guidance shown on the dashboard and in the brief; each is one file in planner/insights/
+  sleep_debt:
+    enabled: true
+    module: training_agent.planner.insights.sleep_debt
+  recovery_trend:
+    enabled: true
+    module: training_agent.planner.insights.recovery_trend
+  rest_days:
+    enabled: true
+    module: training_agent.planner.insights.rest_days
+  load_balance:
+    enabled: true
+    module: training_agent.planner.insights.load_balance
+  intensity_mix:
+    enabled: true
+    module: training_agent.planner.insights.intensity_mix
+  consistency:
+    enabled: true
+    module: training_agent.planner.insights.consistency
+  progression:
+    enabled: true
+    module: training_agent.planner.insights.progression
+
 week_plans:
   event_plan:
     enabled: false

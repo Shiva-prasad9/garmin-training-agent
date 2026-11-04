@@ -19,7 +19,7 @@ import yaml
 
 from training_agent.core.models import DayPlan, Intensity, PlanContext, PlannedSession
 from training_agent.planner.base import Planner
-from training_agent.planner.llm_client import ROOT, AnthropicClient
+from training_agent.planner.llm_client import ROOT, NoReply, make_client
 from training_agent.planner.rules_planner import RulesPlanner, rank
 
 log = logging.getLogger("training_agent.llm_agent")
@@ -77,12 +77,13 @@ def build_prompt(plan: DayPlan, ctx: PlanContext) -> str:
 class LlmAgent(Planner):
     name = "llm_agent"
 
-    def __init__(self, client=None, rules: Planner | None = None, cache_dir: Path | None = CACHE_DIR, config: dict | None = None):
+    def __init__(self, client=None, rules: Planner | None = None, cache_dir: Path | None | str = "default", config: dict | None = None):
         cfg = {**_load_config(), **(config or {})}
         self.rules = rules or RulesPlanner()
-        self.client = client or AnthropicClient(cfg.get("model", "claude-haiku-5-5"), cfg.get("max_tokens", 400), cfg.get("timeout_s", 30))
+        self.client = client or make_client(cfg)
         self.model = getattr(self.client, "model", "custom")
-        self.cache_dir = cache_dir
+        cache_dir = CACHE_DIR if cache_dir == "default" else cache_dir
+        self.cache_dir = cache_dir if getattr(self.client, "cacheable", True) else None
 
     # ---------- main entry ----------
     def plan_day(self, ctx: PlanContext) -> DayPlan:
@@ -92,6 +93,9 @@ class LlmAgent(Planner):
         prompt = build_prompt(plan, ctx)
         try:
             decision = self._cached(plan, prompt) or self._ask(plan, prompt)
+        except NoReply as e:
+            log.info("LLM layer waiting: %s", e)
+            return plan
         except Exception as e:  # never let the model break the daily plan
             log.warning("LLM layer skipped: %s", e)
             return plan

@@ -160,6 +160,34 @@ class PlanContext(BaseModel):
         return next((a for a in self.assessments if a.date == d), None)
 
 
+class ActivityDetail(BaseModel):
+    """Extra detail for one workout (GPS workouts): summary numbers, sampled series and the route.
+
+    Units are SI (metres, seconds, m/s). series: name -> values, one per sample, same length for every series
+    (names: distance_km, time_min, heart_rate, speed_kmh, elevation_m, cadence, power_w). route: [lat, lon] points.
+    """
+
+    activity_id: str
+    distance_m: float | None = None
+    duration_s: float | None = None
+    moving_s: float | None = None
+    elapsed_s: float | None = None
+    avg_speed_ms: float | None = None
+    avg_moving_speed_ms: float | None = None
+    max_speed_ms: float | None = None
+    elevation_gain_m: float | None = None
+    elevation_loss_m: float | None = None
+    max_elevation_m: float | None = None
+    min_elevation_m: float | None = None
+    avg_hr: float | None = None
+    max_hr: float | None = None
+    min_hr: float | None = None
+    calories: float | None = None
+    avg_temp_c: float | None = None
+    series: dict[str, list[float | None]] = Field(default_factory=dict)
+    route: list[tuple[float, float]] = Field(default_factory=list)
+
+
 class Prescription(BaseModel):
     """Concrete targets for a session, derived from the athlete's own history."""
 
@@ -210,6 +238,23 @@ class WeekTargets(BaseModel):
     notes: list[str] = Field(default_factory=list)
 
 
+class Insight(BaseModel):
+    """One piece of plain-language guidance built from the athlete's own data.
+
+    status: "act" (do something), "watch" (keep an eye on it) or "good" (on track).
+    priority: 0-100, higher first. The top non-"good" insight is the next best step.
+    """
+
+    id: str
+    area: str  # recovery | sleep | load | intensity | consistency | progress
+    status: str
+    headline: str  # what the data shows, in one plain sentence
+    meaning: str  # why it matters
+    action: str = ""  # what to do next, imperative
+    priority: int = 0
+    evidence: list[str] = Field(default_factory=list)
+
+
 class DayPlan(BaseModel):
     """The planner's answer for one day: a recommendation plus every option the athlete may choose.
 
@@ -230,6 +275,7 @@ class DayPlan(BaseModel):
     summary: str = ""
     decided_by: str = "rules"  # "rules", or "llm" when the language model chose among the allowed options
     coach_note: str = ""  # plain-language explanation from the language model (empty when it was not used)
+    insights: list[Insight] = Field(default_factory=list)  # guidance, highest priority first
 
 
 class DailyBrief(BaseModel):

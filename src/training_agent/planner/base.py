@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from datetime import date
 
-from training_agent.core.models import PlanContext, DayPlan, Intensity, PlannedSession, RuleVerdict, WeekTargets
+from training_agent.core.models import Insight, PlanContext, DayPlan, Intensity, PlannedSession, RuleVerdict, WeekTargets
 from training_agent.core.plugin import Plugin
 
 
@@ -20,6 +20,15 @@ class PlannerRule(Plugin):
     @abstractmethod
     def evaluate(self, ctx: PlanContext) -> RuleVerdict:
         """Return the cap this rule sets for ctx.day and the reasons for it."""
+
+
+class PlanInsight(Plugin):
+    """Advisory guidance (plugin files live in planner/insights/). Unlike a rule it never limits the plan:
+    it tells the athlete what the data shows and the next best thing to do. Return None when there is not enough data."""
+
+    @abstractmethod
+    def evaluate(self, ctx: PlanContext) -> Insight | None:
+        """Return one Insight for ctx.day, or None."""
 
 
 class WeekPlanSource(Plugin):

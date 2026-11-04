@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
-
 from training_agent.core.models import Intensity, PlanContext, RuleVerdict
 from training_agent.planner.base import PlannerRule
-from training_agent.planner.load import estimate_effort, load_rates
+from training_agent.planner.load import weekly_load_ratio
 from training_agent.planner.params import load_section
 
 DEFAULTS = {"max_ratio": 1.3, "min_chronic_load": 150, "chronic_weeks": 8, "lookback_days": 90,
@@ -23,20 +21,11 @@ class WeeklyLoadLimit(PlannerRule):
         return RuleVerdict(rule=self.name, max_intensity=Intensity.HARD, reasons=[why])
 
     def evaluate(self, ctx: PlanContext) -> RuleVerdict:
-        p, d = self.p, ctx.day
-        history = [a for a in ctx.activities if d - timedelta(days=p["lookback_days"]) <= a.start_time.date() < d]
-        if not history or (d - min(a.start_time.date() for a in history)).days < p["min_history_days"]:
+        p = self.p
+        found = weekly_load_ratio(ctx.activities, ctx.day, p["chronic_weeks"], p["lookback_days"], p["min_history_days"])
+        if found is None:
             return self._ok("Not enough history yet to judge weekly load.")
-        rates = load_rates(history)
-
-        def total(first_back: int, last_back: int) -> float:
-            lo, hi = d - timedelta(days=first_back), d - timedelta(days=last_back)
-            return sum(estimate_effort(a, rates).value for a in history if lo <= a.start_time.date() <= hi)
-
-        history_days = (d - min(a.start_time.date() for a in history)).days
-        weeks = max(1, min(p["chronic_weeks"], (history_days - 7) // 7))  # fewer weeks while history is short
-        acute = total(7, 1)  # the last 7 days
-        chronic = total(7 + 7 * weeks, 8) / weeks  # average week over the weeks before that
+        acute, chronic, weeks = found  # the last 7 days, and the average week before that
         if chronic < p["min_chronic_load"]:
             return self._ok("Your recent weekly load is too low to judge a spike.")
         ratio = acute / chronic

@@ -12,7 +12,7 @@ import logging
 from datetime import date, timedelta
 from pathlib import Path
 
-from training_agent.core.models import DailyBrief
+from training_agent.core.models import DailyBrief, Sport
 from training_agent.core.plugin import load_enabled_plugins
 from training_agent.planner.context import build_context
 
@@ -20,6 +20,34 @@ log = logging.getLogger("training_agent.pipeline")
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "config" / "features.yaml"
 FAR_PAST, FAR_FUTURE = date(2000, 1, 1), date(2100, 1, 1)
+
+
+DETAIL_SPORTS = {Sport.RUN, Sport.BIKE, Sport.OTHER}  # workouts that can have a route; swimming and gym do not
+
+
+def fetch_missing_details(collectors: list, repo, activities: list) -> int:
+    """Download and store route/sample detail for workouts that do not have it yet. Returns how many were added.
+
+    One workout failing never stops the others.
+    """
+    added = 0
+    for a in activities:
+        if a.sport not in DETAIL_SPORTS or repo.get_activity_detail(a.id):
+            continue
+        for c in collectors:
+            fetch = getattr(c, "collect_activity_detail", None)
+            if fetch is None:
+                continue
+            try:
+                detail = fetch(a)
+            except Exception as e:
+                log.warning("%s: detail for %s failed: %s", c.name, a.id, e)
+                continue
+            if detail:
+                repo.save_activity_detail(detail)
+                added += 1
+                break
+    return added
 
 
 def _first(plugins: list, what: str):
@@ -51,6 +79,11 @@ def run_daily(day: date | None = None, days: int = 3, collect: bool = True, conf
             except Exception as e:  # keep going with what is stored
                 log.warning("%s failed: %s", c.name, e)
                 notes.append(f"Could not refresh from {c.name} ({e}); using stored data.")
+
+    if collect and collectors:
+        added = fetch_missing_details(collectors, repo, repo.get_activities(day - timedelta(days=days - 1), day))
+        if added:
+            log.info("activity details: %d new", added)
 
     metrics_all = repo.get_metrics(FAR_PAST, day)
     if not metrics_all:

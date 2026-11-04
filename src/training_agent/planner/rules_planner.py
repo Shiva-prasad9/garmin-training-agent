@@ -8,6 +8,7 @@ inside these options).
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import datetime, time, timedelta
 
@@ -21,6 +22,8 @@ from training_agent.planner.load import DEFAULT_RATE, hard_threshold, is_hard, l
 from training_agent.planner.params import ROOT, load_athlete, load_section
 from training_agent.planner.prescriptions import DEFAULT_RIDE_BANDS, prescribe
 from training_agent.planner.week_plan import fit_to_days, load_sources, monday_of, targets_for_week, week_progress
+
+log = logging.getLogger(__name__)
 
 DEFAULTS = {
     "key_session_gap_days": 5,  # recommend a hard key session if there was none in this many days
@@ -58,10 +61,11 @@ class RulesPlanner(Planner):
     name = "rules_planner"
 
     def __init__(self, rules: list[PlannerRule] | None = None, sources: list[WeekPlanSource] | None = None,
-                 params: dict | None = None):
+                 params: dict | None = None, insights: list | None = None):
         config = ROOT / "config" / "features.yaml"
         self.rules = rules if rules is not None else load_enabled_plugins(config, "planner_rules")
         self.sources = sources if sources is not None else load_sources(config)
+        self.insights = insights if insights is not None else load_enabled_plugins(config, "insights")
         self.p = {**DEFAULTS, **load_section("planner", {}), **(params or {})}
         athlete = load_athlete()
         self.max_hr = float(athlete.get("max_hr", 195))
@@ -87,9 +91,22 @@ class RulesPlanner(Planner):
         if dropped:
             names = ", ".join(f"{s.sport.value} ({s.kind})" for s in dropped)
             summary += f" The week is behind, so it drops: {names}."
-        return DayPlan(day=ctx.day, cap=cap, recommended=recommended, verdicts=verdicts, options=options,
+        return DayPlan(day=ctx.day, cap=cap, recommended=recommended, verdicts=verdicts, options=options, insights=self._insights(ctx),
                        week_source=targets.source, week_phase=targets.phase, remaining_slots=remaining, dropped_slots=dropped,
                        done_this_week=done, summary=summary)
+
+    def _insights(self, ctx: PlanContext) -> list:
+        """Guidance from the insight plugins, most important first. One failing plugin never breaks the plan."""
+        found = []
+        for plugin in self.insights:
+            try:
+                item = plugin.evaluate(ctx)
+            except Exception:  # advisory only
+                log.exception("insight %s failed", plugin.name)
+                continue
+            if item:
+                found.append(item)
+        return sorted(found, key=lambda i: -i.priority)
 
     def to_session(self, plan: DayPlan, intensity: Intensity) -> PlannedSession:
         option = next(o for o in plan.options if o.intensity == intensity)

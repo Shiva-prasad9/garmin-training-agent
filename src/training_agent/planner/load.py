@@ -9,6 +9,8 @@ Effort sources, best first (decision D016):
 
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from collections import defaultdict
 from dataclasses import dataclass
 from statistics import median
@@ -84,3 +86,25 @@ def is_hard(a: Activity, threshold: float | None, rates: dict[Sport, float], zon
     if z and len(z) >= 5 and sum(z) >= MIN_EFFORT_MINUTES * 60 and (z[3] + z[4]) / sum(z) >= zone_share:
         return True
     return threshold is not None and estimate_effort(a, rates).value >= threshold
+
+
+def weekly_load_ratio(activities: list[Activity], day: date, chronic_weeks: int = 8, lookback_days: int = 90,
+                      min_history_days: int = 28) -> tuple[float, float, int] | None:
+    """(load of the last 7 days, average weekly load before that, weeks averaged), or None with too little history.
+
+    Shared by the weekly load rule and the load-balance insight so they always agree.
+    """
+    history = [a for a in activities if day - timedelta(days=lookback_days) <= a.start_time.date() < day]
+    if not history:
+        return None
+    history_days = (day - min(a.start_time.date() for a in history)).days
+    if history_days < min_history_days:
+        return None
+    rates = load_rates(history)
+
+    def total(first_back: int, last_back: int) -> float:
+        lo, hi = day - timedelta(days=first_back), day - timedelta(days=last_back)
+        return sum(estimate_effort(a, rates).value for a in history if lo <= a.start_time.date() <= hi)
+
+    weeks = max(1, min(chronic_weeks, (history_days - 7) // 7))  # fewer weeks while history is short
+    return total(7, 1), total(7 + 7 * weeks, 8) / weeks, weeks

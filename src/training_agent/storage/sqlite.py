@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 
 from training_agent.core.activities import merge_duplicates
-from training_agent.core.models import Activity, DailyMetrics, PlannedSession
+from training_agent.core.models import Activity, ActivityDetail, DailyMetrics, PlannedSession
 from training_agent.storage.base import Repository
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS activities (
     training_load REAL, hr_zone_seconds TEXT, raw_ref TEXT,
     relative_effort REAL, perceived_exertion REAL, perceived_relative_effort REAL,
     avg_power_w REAL, elevation_gain_m REAL
+);
+CREATE TABLE IF NOT EXISTS activity_details (
+    activity_id TEXT PRIMARY KEY, data TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS planned_sessions (
     date TEXT, sport TEXT, intensity TEXT, title TEXT, rationale TEXT,
@@ -102,6 +105,16 @@ class SqliteRepository(Repository):
         with self._connect() as con:
             _upsert(con, "activities", activities)
 
+    def save_activity_detail(self, detail: ActivityDetail) -> None:
+        with self._connect() as con:
+            con.execute("INSERT OR REPLACE INTO activity_details (activity_id, data) VALUES (?, ?)",
+                        (detail.activity_id, detail.model_dump_json()))
+
+    def get_activity_detail(self, activity_id: str) -> ActivityDetail | None:
+        with self._connect() as con:
+            row = con.execute("SELECT data FROM activity_details WHERE activity_id = ?", (activity_id,)).fetchone()
+        return ActivityDetail.model_validate_json(row["data"]) if row else None
+
     def save_plan(self, sessions: list[PlannedSession]) -> None:
         with self._connect() as con:
             _upsert(con, "planned_sessions", sessions)
@@ -113,6 +126,7 @@ class SqliteRepository(Repository):
     def delete_activity(self, activity_id: str) -> None:
         with self._connect() as con:
             con.execute("DELETE FROM activities WHERE id = ?", (activity_id,))
+            con.execute("DELETE FROM activity_details WHERE activity_id = ?", (activity_id,))
 
     def get_plan(self, start: date, end: date) -> list[PlannedSession]:
         with self._connect() as con:

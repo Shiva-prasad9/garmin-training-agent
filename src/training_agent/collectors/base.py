@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from datetime import date
 
-from training_agent.core.models import Activity, DailyMetrics
+from training_agent.core.models import Activity, ActivityDetail, DailyMetrics
 from training_agent.core.plugin import Plugin
 
 
@@ -20,3 +20,7 @@ class Collector(Plugin):
     @abstractmethod
     def collect_activities(self, start: date, end: date) -> list[Activity]:
         """Return Activities for the inclusive date range."""
+
+    def collect_activity_detail(self, activity: Activity) -> ActivityDetail | None:
+        """Optional: richer detail (route, samples) for one of this source's workouts. Default: none available."""
+        return None

@@ -1,5 +1,7 @@
 # Athlete profile. The planner reads this on every run; edit freely.
 
+sleep_target_h: 7.5   # hours of sleep you aim for; the sleep insight compares your week with it
+
 max_hr: 195   # beats per minute, used for heart-rate zones. Replace with your tested value if you have one.
 
 # The default weekly plan, used whenever no event plan is active.

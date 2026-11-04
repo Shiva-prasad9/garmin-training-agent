@@ -3,7 +3,7 @@
 from abc import abstractmethod
 from datetime import date
 
-from training_agent.core.models import Activity, DailyMetrics, PlannedSession
+from training_agent.core.models import Activity, ActivityDetail, DailyMetrics, PlannedSession
 from training_agent.core.plugin import Plugin
 
 
@@ -45,3 +45,11 @@ class Repository(Plugin):
     def get_activities(self, start: date, end: date, include_duplicates: bool = False) -> list[Activity]:
         """Return stored activities for the inclusive range; a workout present in several sources is returned once
         unless include_duplicates is True."""
+
+    @abstractmethod
+    def save_activity_detail(self, detail: ActivityDetail) -> None:
+        """Upsert the detail (route, samples) of one workout."""
+
+    @abstractmethod
+    def get_activity_detail(self, activity_id: str) -> ActivityDetail | None:
+        """Return the stored detail of one workout, or None if it was not downloaded."""

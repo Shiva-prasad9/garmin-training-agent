@@ -29,11 +29,13 @@ class ChooseBody(BaseModel):
     intensity: Intensity
 
 
-class GymBody(BaseModel):
-    minutes: int = Field(ge=5, le=300)
+class ManualBody(BaseModel):
+    sport: Literal["gym", "run", "bike", "swim", "hike", "walk", "other"] = "gym"
+    minutes: int = Field(ge=5, le=720)
     effort: int = Field(ge=1, le=10, description="your own 1-10 rating of how hard it was")
-    kind: Literal["upper", "lower", "full", "other"] = "full"
-    day: date | None = None  # defaults to today; up to 14 days back
+    kind: Literal["upper", "lower", "full", "other"] = "full"  # only used for strength sessions
+    distance_km: float | None = Field(default=None, gt=0, le=1000)
+    day: date | None = None  # defaults to today; up to 90 days back
 
 
 def create_app(repo: Repository | None = None, today: date | None = None) -> FastAPI:
@@ -71,20 +73,34 @@ def create_app(repo: Repository | None = None, today: date | None = None) -> Fas
         data.clear_choice(repo, now())
         return {"cleared": True}
 
-    @app.get("/api/gym")
-    def gym_list() -> list[dict]:
-        return data.list_manual(repo, now() - timedelta(days=30))
+    @app.get("/api/activity-log")
+    def activity_log(kind: Literal["all", "bike", "run", "hike", "swim", "gym", "other"] = "all",
+                     days: int = Query(180, ge=7, le=400)) -> dict:
+        out = data.build_activity_browser(repo, now(), kind, days)
+        out["history_from"] = out["history_from"].isoformat() if out["history_from"] else None
+        return out
 
-    @app.post("/api/gym")
-    def gym_add(body: GymBody, request: Request) -> dict:
+    @app.get("/api/activities/{activity_id:path}")
+    def activity_detail(activity_id: str) -> dict:
+        found = data.build_activity_detail(repo, activity_id)
+        if found is None:
+            raise HTTPException(404, "Unknown workout.")
+        return found
+
+    @app.get("/api/manual")
+    def manual_list() -> list[dict]:
+        return data.list_manual(repo, now() - timedelta(days=90))
+
+    @app.post("/api/manual")
+    def manual_add(body: ManualBody, request: Request) -> dict:
         local_only(request)
         day = body.day or now()
-        if not (now() - timedelta(days=14) <= day <= now()):
-            raise HTTPException(422, "The day must be today or within the last 14 days.")
-        return data.log_gym(repo, day, body.minutes, body.effort, body.kind)
+        if not (now() - timedelta(days=90) <= day <= now()):
+            raise HTTPException(422, "The day must be today or within the last 90 days.")
+        return data.log_manual(repo, day, body.sport, body.minutes, body.effort, body.kind, body.distance_km)
 
-    @app.delete("/api/gym/{activity_id:path}")
-    def gym_delete(activity_id: str, request: Request) -> dict:
+    @app.delete("/api/manual/{activity_id:path}")
+    def manual_delete(activity_id: str, request: Request) -> dict:
         local_only(request)
         try:
             data.delete_manual(repo, activity_id)
