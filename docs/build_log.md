@@ -72,3 +72,23 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Dashboard status cards show the trend as improving/declining/steady (direction judged per signal: higher HRV is good, lower resting HR is good).
 - 5 new tests (21 total). On real data at 2026-11-01: resting HR up (+1.7), Body Battery down (-1.6), HRV borderline (-1.5), sleep steady.
 - Commit message convention: no Co-Authored-By lines (owner preference).
+
+### Step 13: Strava export import (2026-11-04)
+- Probed the export (names and counts only): 260 workouts 2020-07 to 2026-11 (95 rides, 78 runs, 30 swims, 26 weight training, 18 hikes, 13 walks). Units: distance in metres (second `Distance` column), time in seconds. 26 of 27 Strava workouts in Garmin's period match a Garmin workout (start within 3 min).
+- Heart rate on only 21 of 95 rides; Strava estimates power for rides without a meter. Relative Effort on 151 workouts, Perceived Exertion on 30.
+- `Activity` gains optional `relative_effort`, `perceived_exertion`, `avg_power_w`, `elevation_gain_m`. `activities` table migrates automatically (columns added, data untouched).
+- `collectors/strava_export.py` (plugin, read-only, uses Moving Time; hike with a 128-day elapsed time avoided). `scripts/import_strava.py` runs the one-time import.
+- `core/activities.merge_duplicates`: both sources stay stored; reads return one record per workout (Garmin preferred, Strava effort fields carried over). `include_duplicates=True` returns everything.
+- 5 new tests (26 total). Next: calibrate Strava Relative Effort against Garmin load on the matched workouts, then continue the planner.
+
+### Step 14: Calibrating Strava effort to Garmin load (2026-11-04)
+- 26 Garmin workouts match a Strava workout; 21 have both Garmin load and Strava Relative Effort (RE). Correlation 0.93.
+- Ratio Garmin load / RE ranges 0.66-3.1 (RE grows faster than Garmin load for very hard efforts, e.g. the 21 km runs). A single multiplier, **load = 1.42 x RE**, has ~20% median error; a power-law fit was worse (29%), so the simple multiplier is used.
+- Rides without HR: Garmin load is ~0.1-0.5 (effectively nothing). All 4 are in Strava with a perceived exertion and estimated watts. Estimated watts do not track HR-based effort (correlation -0.37 on rides) so they are not used. Perceived exertion has only 2 rides that also have HR effort, so it cannot be calibrated yet.
+- Decision: effort for no-HR rides = duration x typical load per minute of the athlete's HR rides (about 1.3-1.9/min for rides; runs about 2.5/min), with perceived exertion as a rough +/-30% adjustment when present; marked low confidence.
+- To be implemented in planner step 2 (own load estimate). Going forward, logging a perceived effort per workout would let this be calibrated properly.
+
+### Step 15: Perceived Relative Effort (2026-11-04)
+- The user pointed out that for rides without HR they enter a 1-10 rating and Strava computes the effort. The export has this as `Perceived Relative Effort`; the importer was missing it. Added to `Activity`, storage (auto-migrated) and the importer; re-imported.
+- Coverage: rides 20 HR-based + 22 rating-based of 95; runs 54 + 5 of 78; gym 26 of 26. Rating-based effort per hour rises with the rating (3: ~30, 5: ~65, 7: ~115) but is rough (about half the HR value on runs, 2.4x at rating 10). Garmin's four no-HR rides convert to about 4, 247, 1001 and 402 load, consistent with the duration-based estimate.
+- Effort order recorded as D016.

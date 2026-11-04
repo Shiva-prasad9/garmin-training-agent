@@ -6,7 +6,7 @@ collectors:
     enabled: true
     module: training_agent.collectors.garmin_personal_api
   strava_export:
-    enabled: false
+    enabled: true
     module: training_agent.collectors.strava_export
 
 storage:

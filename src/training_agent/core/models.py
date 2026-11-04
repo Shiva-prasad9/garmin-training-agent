@@ -100,6 +100,11 @@ class Activity(BaseModel):
     training_load: float | None = None  # Garmin activityTrainingLoad
     hr_zone_seconds: list[float] | None = None  # time in zones 1-5
     raw_ref: str | None = None  # reference to raw file under data/raw/, never modified
+    relative_effort: float | None = None  # Strava Relative Effort (needs heart rate)
+    perceived_exertion: float | None = None  # athlete-entered, 1-10
+    perceived_relative_effort: float | None = None  # Strava effort computed from the 1-10 rating (no HR)
+    avg_power_w: float | None = None  # Strava estimates this for rides without a power meter
+    elevation_gain_m: float | None = None
 
 
 class PlannedSession(BaseModel):

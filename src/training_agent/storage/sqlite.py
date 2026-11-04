@@ -12,6 +12,7 @@ from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 
+from training_agent.core.activities import merge_duplicates
 from training_agent.core.models import Activity, DailyMetrics, PlannedSession
 from training_agent.storage.base import Repository
 
@@ -28,13 +29,20 @@ CREATE TABLE IF NOT EXISTS daily_metrics (
 CREATE TABLE IF NOT EXISTS activities (
     id TEXT PRIMARY KEY, source TEXT, sport TEXT, source_sport TEXT,
     start_time TEXT, duration_s REAL, distance_m REAL, avg_hr REAL, max_hr REAL,
-    training_load REAL, hr_zone_seconds TEXT, raw_ref TEXT
+    training_load REAL, hr_zone_seconds TEXT, raw_ref TEXT,
+    relative_effort REAL, perceived_exertion REAL, perceived_relative_effort REAL,
+    avg_power_w REAL, elevation_gain_m REAL
 );
 CREATE TABLE IF NOT EXISTS planned_sessions (
     date TEXT, sport TEXT, intensity TEXT, title TEXT, rationale TEXT,
     duration_min INTEGER, rule_flags TEXT, PRIMARY KEY (date, sport, title)
 );
 """
+
+MIGRATIONS = {
+    "activities": {"relative_effort": "REAL", "perceived_exertion": "REAL", "avg_power_w": "REAL",
+                   "elevation_gain_m": "REAL", "perceived_relative_effort": "REAL"},
+}
 
 
 def _row(model) -> dict:
@@ -66,6 +74,12 @@ class SqliteRepository(Repository):
         self._path.parent.mkdir(parents=True, exist_ok=True)
         with self._connect() as con:
             con.executescript(SCHEMA)
+            # Add columns introduced after a table was first created (data is never rewritten).
+            for table, columns in MIGRATIONS.items():
+                have = {r[1] for r in con.execute(f"PRAGMA table_info({table})")}
+                for name, kind in columns.items():
+                    if name not in have:
+                        con.execute(f"ALTER TABLE {table} ADD COLUMN {name} {kind}")
 
     def _connect(self) -> sqlite3.Connection:
         con = sqlite3.connect(self._path)
@@ -90,7 +104,8 @@ class SqliteRepository(Repository):
                                (start.isoformat(), end.isoformat())).fetchall()
         return [DailyMetrics(**dict(r)) for r in rows]
 
-    def get_activities(self, start: date, end: date) -> list[Activity]:
+    def get_activities(self, start: date, end: date, include_duplicates: bool = False) -> list[Activity]:
+        """Stored workouts in the range. By default a workout present in several sources is returned once."""
         with self._connect() as con:
             rows = con.execute(
                 "SELECT * FROM activities WHERE date(start_time) BETWEEN ? AND ? ORDER BY start_time",
@@ -100,4 +115,4 @@ class SqliteRepository(Repository):
             d = dict(r)
             d["hr_zone_seconds"] = json.loads(d["hr_zone_seconds"]) if d["hr_zone_seconds"] else None
             out.append(Activity(**d))
-        return out
+        return out if include_duplicates else merge_duplicates(out)

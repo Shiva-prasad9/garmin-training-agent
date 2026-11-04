@@ -65,7 +65,8 @@ def build_overview(repo: Repository, days: int = 10) -> dict:
         row.update({sig: a.signals[sig].model_dump() for sig in SIGNALS})
         series.append(row)
 
-    all_acts = repo.get_activities(_FAR_PAST, _FAR_FUTURE)
+    # The dashboard shows Garmin workouts only. Strava history is for the agent's own analysis.
+    all_acts = [a for a in repo.get_activities(_FAR_PAST, _FAR_FUTURE) if a.source == "garmin"]
     window_acts = [a for a in all_acts if a.start_time.date() >= start]
     window_acts.sort(key=lambda a: a.start_time, reverse=True)
 

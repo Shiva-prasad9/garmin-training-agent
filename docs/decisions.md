@@ -41,3 +41,12 @@ Target WSL now, an always-on host (e.g. Raspberry Pi) later. No hard-coded absol
 ## D013 (2026-11-01): Local dashboard, Solo Leveling-inspired theme
 FastAPI serves one JSON endpoint plus a static page (plain HTML/CSS/JS, hand-written SVG charts, no build step). Each panel is one JS file listed in `static/js/panels/index.js`. Default range 10 days, options 7/14. Light lavender background with deep indigo highlights, dark toggle. Original CSS/SVG styling only, no copied artwork. Binds to 127.0.0.1 unless `--lan` is given (no login).
 Exception noted: the web layer calls `planner.baselines.assess` (a pure, public function) to get assessments; if more consumers need it, move it to a shared analysis module.
+
+## D014 (2026-11-04): Strava data is for the agent, not the dashboard
+The Strava export is imported and stored so the agent can learn past efforts, baselines and session targets. The dashboard shows Garmin workouts only; it never lists Strava workouts or Strava relative effort.
+
+## D015 (2026-11-04): Effort scale and no-HR rides
+Garmin load is the planner's effort scale. Strava Relative Effort is converted with load = 1.42 x RE (median error ~20%). Rides without heart rate use duration x the athlete's typical ride load per minute, adjusted by perceived exertion when present, and are flagged as estimates. Strava's estimated watts are not used (they do not track HR-based effort).
+
+## D016 (2026-11-04): Effort sources, in order (refines D015)
+1. Garmin load when a heart-rate recording exists. 2. Strava Relative Effort x 1.42. 3. Strava Perceived Relative Effort (computed by Strava from the athlete's 1-10 rating, used when there is no HR) x 1.42, flagged rough (about a factor of 2; consistent across ratings 3-7, overshoots at 10). 4. Duration x the athlete's typical load per minute for the sport, flagged as an estimate (54 older rides have no rating). Strava's estimated watts are not used.

@@ -58,3 +58,12 @@ def test_frontend_files_are_served(tmp_path):
     assert "Training System" in client.get("/").text
     for path in ("/style.css", "/js/main.js", "/js/panels/index.js", "/js/charts.js"):
         assert client.get(path).status_code == 200, path
+
+
+def test_dashboard_ignores_strava_only_workouts(tmp_path):
+    repo = _repo(tmp_path)
+    repo.save_activities([Activity(id="strava:9", source="strava_export", sport=Sport.RUN,
+                                   start_time=datetime(2026, 10, 29, 8), duration_s=1800, relative_effort=50.0)])
+    data = build_overview(repo, days=10)
+    assert [a["id"] for a in data["activities"]] == ["garmin:1", "garmin:2"]
+    assert data["weekly_load"][-1]["run"] == 50.0  # Garmin run only
