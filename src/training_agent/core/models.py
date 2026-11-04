@@ -117,6 +117,9 @@ class PlannedSession(BaseModel):
     rationale: str  # shown in the daily brief
     duration_min: int | None = None
     rule_flags: list[str] = Field(default_factory=list)  # guardrails that applied
+    recommended_intensity: Intensity | None = None  # what the rules advised; differs from `intensity` on override
+    overridden: bool = False  # True when the athlete chose above the recommendation
+    warnings: list[str] = Field(default_factory=list)
 
 
 class DailyBrief(BaseModel):
@@ -127,3 +130,65 @@ class DailyBrief(BaseModel):
     readiness: Readiness
     metrics: DailyMetrics | None = None
     upcoming: list[PlannedSession] = Field(default_factory=list)
+
+
+# ---------- planner contracts ----------
+
+INTENSITY_ORDER = [Intensity.REST, Intensity.EASY, Intensity.MODERATE, Intensity.HARD]
+
+
+def lowest(*levels: Intensity) -> Intensity:
+    """The most restrictive of several intensity levels."""
+    return min(levels, key=INTENSITY_ORDER.index)
+
+
+class RuleVerdict(BaseModel):
+    """What one planner rule says about a day: the highest intensity it allows, and why."""
+
+    rule: str
+    max_intensity: Intensity
+    reasons: list[str] = Field(default_factory=list)
+
+
+class PlanContext(BaseModel):
+    """Everything a planner rule may look at. Rules never fetch data themselves.
+
+    assessments: daily baseline comparisons (see DailyAssessment), oldest first.
+    activities: workouts from all sources, duplicates already merged.
+    chosen: sessions the athlete accepted (so an override shapes the days that follow).
+    """
+
+    day: date
+    assessments: list[DailyAssessment] = Field(default_factory=list)
+    activities: list[Activity] = Field(default_factory=list)
+    chosen: list[PlannedSession] = Field(default_factory=list)
+
+    def assessment_for(self, d: date) -> DailyAssessment | None:
+        return next((a for a in self.assessments if a.date == d), None)
+
+
+class Prescription(BaseModel):
+    """Concrete targets for a session, derived from the athlete's own history."""
+
+    sport: Sport
+    intensity: Intensity
+    duration_min: float | None = None
+    distance_km: float | None = None
+    pace_min_per_km: float | None = None  # runs
+    speed_kmh: float | None = None  # rides
+    hr_low: int | None = None
+    hr_high: int | None = None
+    based_on: int = 0  # number of past sessions behind these numbers
+    note: str = ""
+
+
+class SessionOption(BaseModel):
+    """One choice offered to the athlete for a day. All options can be chosen; risk only warns."""
+
+    intensity: Intensity
+    sport: Sport | None = None
+    title: str
+    prescription: Prescription | None = None
+    risk: str = "recommended"  # "recommended" | "caution" | "not_advised"
+    reasons: list[str] = Field(default_factory=list)
+    tomorrow: str | None = None  # what choosing this means for the next day

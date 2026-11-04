@@ -16,13 +16,13 @@ storage:
 
 planner_rules:
   readiness_gate:
-    enabled: false
+    enabled: true
     module: training_agent.planner.rules.readiness_gate
   hard_easy_alternation:
-    enabled: false
+    enabled: true
     module: training_agent.planner.rules.hard_easy_alternation
   weekly_load_limit:
-    enabled: false
+    enabled: true
     module: training_agent.planner.rules.weekly_load_limit
 
 planner:

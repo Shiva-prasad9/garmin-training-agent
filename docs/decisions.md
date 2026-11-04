@@ -50,3 +50,6 @@ Garmin load is the planner's effort scale. Strava Relative Effort is converted w
 
 ## D016 (2026-11-04): Effort sources, in order (refines D015)
 1. Garmin load when a heart-rate recording exists. 2. Strava Relative Effort x 1.42. 3. Strava Perceived Relative Effort (computed by Strava from the athlete's 1-10 rating, used when there is no HR) x 1.42, flagged rough (about a factor of 2; consistent across ratings 3-7, overshoots at 10). 4. Duration x the athlete's typical load per minute for the sport, flagged as an estimate (54 older rides have no rating). Strava's estimated watts are not used.
+
+## D017 (2026-11-04): Weekly load compared with an 8-week average
+The weekly load limit compares the last 7 days with the average week over the 8 weeks before (fewer while history is short). Four weeks was too jumpy for lumpy training (it kept the limit on for days). Chosen by the athlete after the first real-data run; all rule thresholds are expected to be tuned after the first trial period.

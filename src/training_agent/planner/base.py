@@ -3,24 +3,19 @@
 from abc import abstractmethod
 from datetime import date
 
-from training_agent.core.models import Activity, DailyMetrics, Intensity, PlannedSession
+from training_agent.core.models import Activity, DailyMetrics, PlanContext, PlannedSession, RuleVerdict
 from training_agent.core.plugin import Plugin
 
 
 class PlannerRule(Plugin):
     """A deterministic guardrail (plugin files live in planner/rules/).
 
-    Rules only restrict; they never raise the allowed intensity.
+    Rules only restrict: a verdict is the highest intensity the rule allows, with reasons.
     """
 
     @abstractmethod
-    def max_intensity(
-        self,
-        day: date,
-        metrics: list[DailyMetrics],
-        history: list[Activity],
-    ) -> tuple[Intensity, str]:
-        """Return the highest allowed intensity for `day` and the reason."""
+    def evaluate(self, ctx: PlanContext) -> RuleVerdict:
+        """Return the cap this rule sets for ctx.day and the reasons for it."""
 
 
 class Planner(Plugin):

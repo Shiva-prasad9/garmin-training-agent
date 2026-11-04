@@ -26,6 +26,10 @@ class Repository(Plugin):
         """Store planned sessions."""
 
     @abstractmethod
+    def get_plan(self, start: date, end: date) -> list[PlannedSession]:
+        """Return stored planned sessions for the inclusive range."""
+
+    @abstractmethod
     def get_metrics(self, start: date, end: date) -> list[DailyMetrics]:
         """Return stored metrics for the inclusive range."""
 

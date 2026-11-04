@@ -12,7 +12,19 @@ data_quality:
   min_sleep_hours: 3.0     # shorter nights are treated as partial recordings
   hrv_outlier_z: 4.0       # |z| above this flags the HRV value as an outlier
 
-# Added in Phase 4 (not used yet):
-# readiness_gate:
-# hard_easy_alternation:
-# weekly_load_limit:
+readiness_gate:
+  notable_z: 1.5           # signal this far worse than your normal counts as notable
+  unusual_z: 2.5           # ... and this far counts as unusual
+  illness_z: 2.0           # resting HR up AND HRV down by this much together means rest
+
+hard_easy_alternation:
+  hard_load_percentile: 0.75   # a workout in your top quarter of effort counts as hard
+  hard_zone_share: 0.25        # or this share of time in heart-rate zones 4-5
+  lookback_days: 90
+
+weekly_load_limit:
+  max_ratio: 1.3           # last 7 days vs your average week
+  chronic_weeks: 8         # weeks used for the average (8 suits lumpy training; was 4)
+  min_chronic_load: 150    # below this average week the ratio is too noisy to use
+  lookback_days: 90
+  min_history_days: 28

@@ -92,3 +92,12 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - The user pointed out that for rides without HR they enter a 1-10 rating and Strava computes the effort. The export has this as `Perceived Relative Effort`; the importer was missing it. Added to `Activity`, storage (auto-migrated) and the importer; re-imported.
 - Coverage: rides 20 HR-based + 22 rating-based of 95; runs 54 + 5 of 78; gym 26 of 26. Rating-based effort per hour rises with the rating (3: ~30, 5: ~65, 7: ~115) but is rough (about half the HR value on runs, 2.4x at rating 10). Garmin's four no-HR rides convert to about 4, 247, 1001 and 402 load, consistent with the duration-based estimate.
 - Effort order recorded as D016.
+
+### Step 16: Planner steps 1-5 (2026-11-04)
+- Contracts in `core/models.py`: `RuleVerdict`, `PlanContext`, `Prescription`, `SessionOption`, `lowest()`; `PlannedSession` gains recommended_intensity / overridden / warnings; `planned_sessions` table migrated; `Repository.get_plan` added.
+- `planner/load.py`: effort in the D016 order, per-sport load rate, hard threshold (top quarter of the athlete's 90 days) and `is_hard` (zones 4-5 share or top-quarter effort; gym never hard).
+- Rule plugins (thresholds in `config/rules.yaml`, enabled in `features.yaml`): `readiness_gate`, `hard_easy_alternation`, `weekly_load_limit`. `PlannerRule` now has one method, `evaluate(ctx) -> RuleVerdict`.
+- Tests: 55 passing (new `test_load.py`, `test_rules.py`).
+- Real-data run (Oct 31 - Nov 4): Oct 31 easy (HRV trending worse, resting HR high), Nov 1 easy (sleep score unusually low, Body Battery low, resting HR high, yesterday's hard ride, weekly load 168% of average), Nov 2-3 readiness normal but weekly load limit easy (182%), Nov 4 easy (sleep score unusually low, RHR trend, load 236%).
+- Observation for tuning: the athlete's weeks are very lumpy, so the average week load is small and the weekly limit stays on for days.
+- Weekly load limit changed to an 8-week average (D017): on real data the last days now read 101-120% of the average week instead of 170-240%. Nov 2-3 allow hard; Nov 4 is easy from the readiness gate (sleep score). 56 tests pass. All thresholds to be tuned after the first trial.

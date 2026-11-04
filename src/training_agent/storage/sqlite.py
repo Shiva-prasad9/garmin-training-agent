@@ -35,13 +35,15 @@ CREATE TABLE IF NOT EXISTS activities (
 );
 CREATE TABLE IF NOT EXISTS planned_sessions (
     date TEXT, sport TEXT, intensity TEXT, title TEXT, rationale TEXT,
-    duration_min INTEGER, rule_flags TEXT, PRIMARY KEY (date, sport, title)
+    duration_min INTEGER, rule_flags TEXT, recommended_intensity TEXT, overridden INTEGER, warnings TEXT,
+    PRIMARY KEY (date, sport, title)
 );
 """
 
 MIGRATIONS = {
     "activities": {"relative_effort": "REAL", "perceived_exertion": "REAL", "avg_power_w": "REAL",
                    "elevation_gain_m": "REAL", "perceived_relative_effort": "REAL"},
+    "planned_sessions": {"recommended_intensity": "TEXT", "overridden": "INTEGER", "warnings": "TEXT"},
 }
 
 
@@ -97,6 +99,19 @@ class SqliteRepository(Repository):
     def save_plan(self, sessions: list[PlannedSession]) -> None:
         with self._connect() as con:
             _upsert(con, "planned_sessions", sessions)
+
+    def get_plan(self, start: date, end: date) -> list[PlannedSession]:
+        with self._connect() as con:
+            rows = con.execute("SELECT * FROM planned_sessions WHERE date BETWEEN ? AND ? ORDER BY date",
+                               (start.isoformat(), end.isoformat())).fetchall()
+        out = []
+        for r in rows:
+            d = dict(r)
+            d["rule_flags"] = json.loads(d["rule_flags"]) if d["rule_flags"] else []
+            d["warnings"] = json.loads(d["warnings"]) if d["warnings"] else []
+            d["overridden"] = bool(d["overridden"])
+            out.append(PlannedSession(**d))
+        return out
 
     def get_metrics(self, start: date, end: date) -> list[DailyMetrics]:
         with self._connect() as con:
