@@ -74,3 +74,7 @@ Work on `feature/*` branches; `main` must always run. Golden-day tests in `tests
 - Vision: [docs/vision.md](docs/vision.md)
 - Decisions: [docs/decisions.md](docs/decisions.md)
 - Roadmap: [docs/roadmap.md](docs/roadmap.md)
+
+## License
+
+MIT, see [LICENSE](LICENSE).
