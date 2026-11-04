@@ -12,7 +12,7 @@ The rules set the cap and build every option. The model can only choose at or be
 answer. If the model is missing, fails or answers outside the rules, the plan stays rules-only.
 
 ## provider: manual (default, no key)
-1. Run `.venv/bin/python main.py` (or `--no-collect`). It writes `data/llm/prompt_<date>.md`.
+1. Run `.venv/bin/python main.py` (or `--no-collect`). It writes `data/llm/prompt_<date>.md`. The prompt includes today's numbers, the rules cap and the insights (finding and next step).
 2. Paste that file into any chat model (Claude, ChatGPT, a local model).
 3. Save the model's reply (a JSON object, extra text around it is fine) as `data/llm/reply_<date>.json`.
 4. Run again or refresh the dashboard. The coach note appears and the pick is used if the rules allow it.

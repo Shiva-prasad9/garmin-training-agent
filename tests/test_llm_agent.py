@@ -82,7 +82,7 @@ def test_same_day_same_facts_is_answered_from_cache(tmp_path):
 def test_prompt_is_compact_facts_only():
     plan = RulesPlanner(sources=[FixedTemplate()]).plan_day(ctx())
     facts = json.loads(build_prompt(plan, ctx()))
-    assert {"cap", "options", "rule_verdicts", "workouts_last_7_days"} <= set(facts)
+    assert {"cap", "options", "rule_verdicts", "workouts_last_7_days", "insights"} <= set(facts)
     assert facts["workouts_last_7_days"][0]["sport"] == "bike"
     assert "@" not in json.dumps(facts)
 
@@ -123,3 +123,15 @@ def test_provider_switch_by_config():
     assert make_client({"provider": "anthropic"}).__class__.__name__ == "AnthropicClient"
     with pytest.raises(ValueError):
         make_client({"provider": "typo"})
+
+
+def test_prompt_carries_the_insights_most_important_first():
+    from training_agent.core.models import Insight
+    plan = RulesPlanner(sources=[FixedTemplate()]).plan_day(ctx())
+    plan = plan.model_copy(update={"insights": [
+        Insight(id="a", area="sleep", status="act", priority=85, headline="You slept 6.0 h.", meaning="m", action="Go to bed earlier."),
+        Insight(id="b", area="load", status="good", priority=20, headline="Load is fine.", meaning="m", action="Stay with the plan.")]})
+    facts = json.loads(build_prompt(plan, ctx()))
+    assert [i["area"] for i in facts["insights"]] == ["sleep", "load"]
+    assert facts["insights"][0] == {"status": "act", "area": "sleep", "finding": "You slept 6.0 h.", "do_next": "Go to bed earlier."}
+    assert "meaning" not in json.dumps(facts["insights"])  # compact: finding and next step only

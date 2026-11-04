@@ -35,7 +35,7 @@ Pipeline: collect → store → plan → publish. Stages communicate ONLY via da
 
 - WSL Ubuntu 24.04, Python 3.12, venv in .venv/
 - Later: move to an always-on home host (e.g. Raspberry Pi). Keep everything Linux-compatible and path-independent.
-- GitHub: private repo https://github.com/Shiva-prasad9/garmin-training-agent.git. Work on feature/* branches; main must always run.
+- GitHub: public repo https://github.com/Shiva-prasad9/garmin-training-agent.git. Work on feature/* branches; main must always run.
 
 ## Security rules
 

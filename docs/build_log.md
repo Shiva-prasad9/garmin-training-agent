@@ -195,3 +195,9 @@ Step-by-step record of what we did and why. Source for the final PDF/Word docume
 - Overview cut from about 3,900 px tall to about 1,450 px: key numbers, then today's plan (recommended session in full, the other three as compact choice buttons), a small readiness gauge, a week ring, trends in a 2x2 block, and a short "Recent activity" list (5 workouts, "See all activities" link). The weekly-load chart, the long activity list and the gym log left the overview.
 - The gym log became a general manual log (`/api/manual`, replacing `/api/gym`): under Activities, "+ Log an activity by hand" with an Activity drop-down (strength, running, cycling, swimming, hiking, walking, other), date (up to 90 days back), minutes, optional distance and a 1-10 effort. Entries count toward the week and load, show up under the matching sport, and can be deleted from the same list.
 - 151 tests pass. Checked in a real browser (dark, light, phone): no console errors.
+
+### Step 33: Insights fed to the LLM (2026-11-04)
+- The prompt now carries the insights, most important first, each with its finding and next step (`meaning` is not sent). The coach note is at most 3 plain sentences: why the session fits today, plus the next best step in the model's own words.
+- The rules cap is unchanged: the model can only choose at or below it, and any failure falls back to the rules plan. Old cached answers are not reused because the prompt changed.
+- 152 tests pass. Not yet tried against a real model; use the manual copy-paste flow in `docs/llm.md`.
+- Repo made public; checked file contents and history for keys, home paths and outputs before sharing.

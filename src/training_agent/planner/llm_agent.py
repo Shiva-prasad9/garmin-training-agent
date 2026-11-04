@@ -28,10 +28,11 @@ CACHE_DIR = ROOT / "data" / "cache" / "llm"
 MAX_NOTE = 700
 
 SYSTEM = (
-    "You are a careful endurance-training coach for one athlete. A rules engine has already set the highest "
-    "intensity allowed today (the cap) and built the options. Choose the intensity for today from the allowed "
-    "options and explain the choice in 2-3 plain sentences, referring to the athlete's own numbers. "
-    "Never choose above the cap. Do not invent data. Do not give medical advice."
+    "You are a careful endurance-training coach for one athlete who is not a sports scientist. A rules engine has already set "
+    "the highest intensity allowed today (the cap) and built the options. Choose the intensity for today from the options at or "
+    "below the cap. Then write a coach note of at most 3 short plain-English sentences: why this choice fits today's numbers, and "
+    "the athlete's next best step (use the top insight that needs attention, in your own words). Refer to the athlete's own numbers "
+    "only as given in the facts. Never choose above the cap. Do not invent data. Do not give medical advice."
 )
 TOOL = {
     "name": "submit_decision",
@@ -70,6 +71,8 @@ def build_prompt(plan: DayPlan, ctx: PlanContext) -> str:
         "still_to_do_this_week": [f"{s.sport.value} ({s.kind})" for s in plan.remaining_slots],
         "dropped_this_week": [f"{s.sport.value} ({s.kind})" for s in plan.dropped_slots],
         "workouts_last_7_days": recent,
+        # the planner's guidance, most important first; "act" and "watch" items are what the note should build on
+        "insights": [{"status": i.status, "area": i.area, "finding": i.headline, "do_next": i.action} for i in plan.insights],
     }
     return json.dumps(facts, indent=1)
 
